@@ -28,6 +28,7 @@ const env = {
   verifyBaseUrl,
   verifyFallbackBaseUrl,
   resetBaseUrl: process.env.RESET_BASE_URL || "http://localhost:4000/api/v1/auth/reset-password",
+  resendApiKey: process.env.RESEND_API_KEY,
 };
 
 const required = [
