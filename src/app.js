@@ -30,6 +30,10 @@ app.use("/api/v1/zones", zoneRoute);
 app.use("/api/v1/org", orgRoute);
 app.use("/public", publicRoute);
 
+app.get("/", (_req, res) => {
+  res.status(200).send("ChainTrace backend is running");
+});
+
 app.use(notFound);
 app.use(errorHandler);
 
