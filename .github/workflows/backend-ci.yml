@@ -20,6 +20,7 @@ on:
 
 jobs:
   backend-ci:
+    name: Backend CI Job
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
