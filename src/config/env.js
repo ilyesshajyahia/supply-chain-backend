@@ -32,6 +32,7 @@ const env = {
     process.env.RESET_DEEP_LINK_URL || "chaintrace://reset-password",
   resendApiKey: process.env.RESEND_API_KEY,
   mailtrapApiKey: process.env.MAILTRAP_API_KEY,
+  authBypass: String(process.env.AUTH_BYPASS || "false").toLowerCase() === "true",
 };
 
 const required = [

@@ -5,6 +5,19 @@ const User = require("../models/user.model");
 const env = require("../config/env");
 
 async function requireAuth(req, _res, next) {
+  if (env.authBypass) {
+    req.user = {
+      _id: req.header("x-test-user-id") || "000000000000000000000001",
+      email: req.header("x-test-email") || "bypass@test.local",
+      role: req.header("x-test-role") || "manufacturer",
+      orgId: req.header("x-test-org-id") || "org_001",
+      isOrgAdmin: String(req.header("x-test-org-admin") || "true").toLowerCase() === "true",
+      isActive: true,
+      isEmailVerified: true,
+    };
+    return next();
+  }
+
   const authHeader = req.header("authorization") || req.header("Authorization");
   let userId = null;
 
