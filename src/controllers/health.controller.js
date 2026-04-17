@@ -12,14 +12,15 @@ const health = asyncHandler(async (_req, res) => {
 
 const healthDetails = asyncHandler(async (_req, res) => {
   const readyState = mongoose.connection.readyState;
-  const rpcHost = (() => {
+
+  const rpcHostFor = (rpcUrl) => {
     try {
-      if (!env.rpcUrl) return null;
-      return new URL(env.rpcUrl).host;
+      if (!rpcUrl) return null;
+      return new URL(rpcUrl).host;
     } catch (_) {
       return null;
     }
-  })();
+  };
 
   res.json({
     ok: true,
@@ -31,10 +32,19 @@ const healthDetails = asyncHandler(async (_req, res) => {
       readyState,
     },
     chain: {
-      chainId: env.chainId,
-      rpcHost,
-      registryAddress: env.productRegistryAddress || null,
-      lifecycleAddress: env.productLifecycleAddress || null,
+      activeChain: env.activeChain || "l1",
+      l1: {
+        chainId: env.l1?.chainId || null,
+        rpcHost: rpcHostFor(env.l1?.rpcUrl),
+        registryAddress: env.l1?.productRegistryAddress || null,
+        lifecycleAddress: env.l1?.productLifecycleAddress || null,
+      },
+      l2: {
+        chainId: env.l2?.chainId || null,
+        rpcHost: rpcHostFor(env.l2?.rpcUrl),
+        registryAddress: env.l2?.productRegistryAddress || null,
+        lifecycleAddress: env.l2?.productLifecycleAddress || null,
+      },
     },
     email: {
       provider: env.resendApiKey ? "resend" : "smtp",

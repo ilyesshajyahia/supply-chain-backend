@@ -1,8 +1,36 @@
 const { createContracts } = require("../config/blockchain");
 const env = require("../config/env");
 const { ethers } = require("ethers");
+const ApiError = require("../utils/ApiError");
 
-const contracts = createContracts(env);
+const contractsByChain = createContracts(env);
+
+function resolveNetworkLabel(network) {
+  const preferred = String(network || env.activeChain || "l1")
+    .trim()
+    .toLowerCase();
+
+  if (contractsByChain[preferred]) {
+    return preferred;
+  }
+  if (contractsByChain.l1) {
+    return "l1";
+  }
+  if (contractsByChain.l2) {
+    return "l2";
+  }
+  throw new ApiError(500, "No blockchain network is configured");
+}
+
+function chainMeta(network) {
+  const cfg = env[network] || {};
+  return {
+    network,
+    chainId: cfg.chainId || null,
+    registryAddress: cfg.productRegistryAddress || null,
+    lifecycleAddress: cfg.productLifecycleAddress || null,
+  };
+}
 
 function receiptHash(receipt) {
   return receipt.hash || receipt.transactionHash || null;
@@ -28,17 +56,27 @@ function gasMetricsFromReceipt(receipt) {
   };
 }
 
-async function addProductOnChain(productIdOnChain, name) {
+async function addProductOnChain(productIdOnChain, name, options = {}) {
+  const network = resolveNetworkLabel(options.network);
+  const contracts = contractsByChain[network];
   const tx = await contracts.productRegistry.addProduct(BigInt(productIdOnChain), name);
   const receipt = await tx.wait();
   return {
+    ...chainMeta(network),
     txHash: receiptHash(receipt),
     blockNumber: Number(receipt.blockNumber),
     gas: gasMetricsFromReceipt(receipt),
   };
 }
 
-async function addLifecycleEventOnChain(productIdOnChain, eventType, locationText) {
+async function addLifecycleEventOnChain(
+  productIdOnChain,
+  eventType,
+  locationText,
+  options = {}
+) {
+  const network = resolveNetworkLabel(options.network);
+  const contracts = contractsByChain[network];
   const tx = await contracts.productLifecycle.addEvent(
     BigInt(productIdOnChain),
     eventType,
@@ -46,6 +84,7 @@ async function addLifecycleEventOnChain(productIdOnChain, eventType, locationTex
   );
   const receipt = await tx.wait();
   return {
+    ...chainMeta(network),
     txHash: receiptHash(receipt),
     blockNumber: Number(receipt.blockNumber),
     gas: gasMetricsFromReceipt(receipt),
@@ -53,7 +92,7 @@ async function addLifecycleEventOnChain(productIdOnChain, eventType, locationTex
 }
 
 module.exports = {
-  contracts,
+  contractsByChain,
   addProductOnChain,
   addLifecycleEventOnChain,
 };

@@ -18,16 +18,52 @@ const productLifecycleAbi = [
 ];
 
 function createContracts(env) {
-  const provider = new ethers.JsonRpcProvider(env.rpcUrl, env.chainId || undefined);
-  const signer = new ethers.Wallet(env.signerPrivateKey, provider);
+  const build = (chainConfig) => {
+    if (
+      !chainConfig ||
+      !chainConfig.rpcUrl ||
+      !chainConfig.rolesManagerAddress ||
+      !chainConfig.productRegistryAddress ||
+      !chainConfig.productLifecycleAddress
+    ) {
+      return null;
+    }
 
-  return {
-    provider,
-    signer,
-    rolesManager: new ethers.Contract(env.rolesManagerAddress, rolesManagerAbi, signer),
-    productRegistry: new ethers.Contract(env.productRegistryAddress, productRegistryAbi, signer),
-    productLifecycle: new ethers.Contract(env.productLifecycleAddress, productLifecycleAbi, signer),
+    const provider = new ethers.JsonRpcProvider(
+      chainConfig.rpcUrl,
+      chainConfig.chainId || undefined
+    );
+    const signer = new ethers.Wallet(env.signerPrivateKey, provider);
+
+    return {
+      provider,
+      signer,
+      rolesManager: new ethers.Contract(
+        chainConfig.rolesManagerAddress,
+        rolesManagerAbi,
+        signer
+      ),
+      productRegistry: new ethers.Contract(
+        chainConfig.productRegistryAddress,
+        productRegistryAbi,
+        signer
+      ),
+      productLifecycle: new ethers.Contract(
+        chainConfig.productLifecycleAddress,
+        productLifecycleAbi,
+        signer
+      ),
+    };
   };
+
+  const byChain = {
+    l1: build(env.l1),
+    l2: build(env.l2),
+  };
+
+  return Object.fromEntries(
+    Object.entries(byChain).filter(([, value]) => Boolean(value))
+  );
 }
 
 module.exports = { createContracts };

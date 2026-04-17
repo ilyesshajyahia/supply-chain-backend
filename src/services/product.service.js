@@ -53,6 +53,7 @@ async function ensureZone({ user, longitude, latitude, session }) {
 
 async function registerProduct({ user, payload }) {
   const { qrId, productIdOnChain, name, longitude, latitude } = payload;
+  const network = String(payload.network || "").trim().toLowerCase() || undefined;
   const serialNumber = normalizeIdentifier(payload.serialNumber);
   const brand = normalizeOptionalText(payload.brand, 120);
   const category = normalizeOptionalText(payload.category, 120);
@@ -84,11 +85,14 @@ async function registerProduct({ user, payload }) {
         }
       }
 
-      const chainResultProduct = await addProductOnChain(productIdOnChain, name);
+      const chainResultProduct = await addProductOnChain(productIdOnChain, name, {
+        network,
+      });
       const chainResultEvent = await addLifecycleEventOnChain(
         productIdOnChain,
         "Manufactured",
-        locationText(longitude, latitude)
+        locationText(longitude, latitude),
+        { network }
       );
 
       const product = await Product.create(
@@ -127,6 +131,12 @@ async function registerProduct({ user, payload }) {
             timestamp: new Date(),
             meta: {
               eventType: "Manufactured",
+              network: chainResultEvent.network || chainResultProduct.network || null,
+              chainId: chainResultEvent.chainId || chainResultProduct.chainId || null,
+              registryAddress:
+                chainResultProduct.registryAddress || chainResultEvent.registryAddress || null,
+              lifecycleAddress:
+                chainResultEvent.lifecycleAddress || chainResultProduct.lifecycleAddress || null,
               registryTxHash: chainResultProduct.txHash,
               registryGas: chainResultProduct.gas || null,
               lifecycleGas: chainResultEvent.gas || null,
@@ -173,6 +183,7 @@ function transferRules(role) {
 
 async function transferProduct({ user, payload }) {
   const { longitude, latitude } = payload;
+  const network = String(payload.network || "").trim().toLowerCase() || undefined;
   const identifier = normalizeIdentifier(
     payload.qrId || payload.identifier || payload.serialNumber
   );
@@ -202,7 +213,8 @@ async function transferProduct({ user, payload }) {
       const chainResult = await addLifecycleEventOnChain(
         product.productIdOnChain,
         rules.eventTypeOnChain || rules.eventType,
-        locationText(longitude, latitude)
+        locationText(longitude, latitude),
+        { network }
       );
 
       product.currentOwnerRole = rules.nextOwner;
@@ -224,6 +236,9 @@ async function transferProduct({ user, payload }) {
             timestamp: new Date(),
             meta: {
               eventType: rules.eventType,
+              network: chainResult.network || null,
+              chainId: chainResult.chainId || null,
+              lifecycleAddress: chainResult.lifecycleAddress || null,
               gas: chainResult.gas || null,
             },
           },
@@ -258,6 +273,7 @@ async function transferProduct({ user, payload }) {
 
 async function finalizeSale({ user, payload }) {
   const { longitude, latitude } = payload;
+  const network = String(payload.network || "").trim().toLowerCase() || undefined;
   const identifier = normalizeIdentifier(
     payload.qrId || payload.identifier || payload.serialNumber
   );
@@ -282,7 +298,8 @@ async function finalizeSale({ user, payload }) {
       const chainResult = await addLifecycleEventOnChain(
         product.productIdOnChain,
         "Purchased",
-        locationText(longitude, latitude)
+        locationText(longitude, latitude),
+        { network }
       );
 
       product.isSold = true;
@@ -305,6 +322,9 @@ async function finalizeSale({ user, payload }) {
             timestamp: new Date(),
             meta: {
               eventType: "Purchased",
+              network: chainResult.network || null,
+              chainId: chainResult.chainId || null,
+              lifecycleAddress: chainResult.lifecycleAddress || null,
               gas: chainResult.gas || null,
             },
           },
