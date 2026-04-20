@@ -4,6 +4,8 @@ import 'package:flutter_app/src/models/domain_models.dart';
 import 'package:flutter_app/src/screens/entry_choice_screen.dart';
 import 'package:flutter_app/src/screens/scan_qr_screen.dart';
 import 'package:flutter_app/src/screens/org_admin_screen.dart';
+import 'package:flutter_app/src/screens/system_health_screen.dart';
+import 'package:flutter_app/src/screens/internal_chat_screen.dart';
 import 'package:flutter_app/src/services/location_service.dart';
 import 'package:flutter_app/src/theme/app_theme.dart';
 import 'package:flutter_app/src/widgets/modern_shell.dart';
@@ -36,6 +38,11 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _productName = TextEditingController();
   final TextEditingController _productIdOnChain = TextEditingController();
+  final TextEditingController _serialNumber = TextEditingController();
+  final TextEditingController _brand = TextEditingController();
+  final TextEditingController _category = TextEditingController();
+  final TextEditingController _color = TextEditingController();
+  final TextEditingController _description = TextEditingController();
 
   Geofence get _effectiveZone => _backendZone ?? widget.user.allowedArea;
 
@@ -56,6 +63,11 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
   void dispose() {
     _productName.dispose();
     _productIdOnChain.dispose();
+    _serialNumber.dispose();
+    _brand.dispose();
+    _category.dispose();
+    _color.dispose();
+    _description.dispose();
     super.dispose();
   }
 
@@ -79,7 +91,7 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
   Future<void> _loadBackendZone() async {
     try {
       final Geofence? zone = await widget.deps.traceabilityService
-          .fetchActiveZone(role: widget.user.role);
+          .fetchActiveZone(role: widget.user.role, orgId: widget.user.orgId);
       if (!mounted) return;
       setState(() {
         _backendZone = zone;
@@ -124,6 +136,11 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
           allowedAreaOverride: _effectiveZone,
           productIdOnChain: onChainId,
           productName: _productName.text.trim(),
+          serialNumber: _serialNumber.text.trim(),
+          brand: _brand.text.trim(),
+          category: _category.text.trim(),
+          color: _color.text.trim(),
+          description: _description.text.trim(),
           finalizeSale: _finalizeSale,
         );
     if (!mounted) return;
@@ -146,52 +163,26 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
         title: '${roleLabel(widget.user.role)} Dashboard',
         subtitle:
             'Scan product QR to run your role action. Location must be within your allowed area.',
+        headerActions: <Widget>[
+          IconButton(
+            tooltip: 'Logout',
+            onPressed: () async {
+              await widget.deps.traceabilityService.logout();
+              if (!mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute<void>(
+                  builder: (_) => EntryChoiceScreen(deps: widget.deps),
+                ),
+                (_) => false,
+              );
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
         child: ListView(
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                if (widget.user.role != ActorRole.customer)
-                  FutureBuilder<Map<String, dynamic>?>(
-                    future: widget.deps.traceabilityService.getProfile(),
-                    builder: (context, snapshot) {
-                      final bool isAdmin =
-                          (snapshot.data?['isOrgAdmin'] == true);
-                      if (!isAdmin) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    OrgAdminScreen(deps: widget.deps),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.admin_panel_settings_outlined),
-                          label: const Text('Admin'),
-                        ),
-                      );
-                    },
-                  ),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await widget.deps.traceabilityService.logout();
-                    if (!mounted) return;
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute<void>(
-                        builder: (_) => EntryChoiceScreen(deps: widget.deps),
-                      ),
-                      (_) => false,
-                    );
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+            _buildAdminTools(),
+            const SizedBox(height: 20),
             const ScreenSection(
               title: 'Location Eligibility',
               icon: Icons.location_on_outlined,
@@ -268,8 +259,10 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
                             point: fenceCenter,
                             radius: fence.radiusKm * 1000,
                             useRadiusInMeter: true,
-                            color: AppTheme.brand.withOpacity(0.2),
-                            borderColor: AppTheme.brand,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.2),
+                            borderColor: Theme.of(context).colorScheme.primary,
                             borderStrokeWidth: 2,
                           ),
                         ],
@@ -288,7 +281,9 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.brand),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                                 boxShadow: AppTheme.softShadow,
                               ),
                               child: Text(
@@ -327,6 +322,23 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
               icon: Icons.rule_folder_outlined,
               child: SoftCard(child: Text(_workflowHint(widget.user.role))),
             ),
+            const SizedBox(height: 12),
+            ActionCard(
+              title: 'Internal Chat',
+              description:
+                  'Message manufacturer, distributor, and reseller users in your organization.',
+              icon: Icons.forum_outlined,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => InternalChatScreen(
+                      deps: widget.deps,
+                      user: widget.user,
+                    ),
+                  ),
+                );
+              },
+            ),
             if (widget.user.role == ActorRole.manufacturer) ...<Widget>[
               const SizedBox(height: 32),
               const SectionTitle(
@@ -350,6 +362,52 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
                   border: OutlineInputBorder(),
                   labelText: 'On-chain Product ID (optional)',
                   prefixIcon: Icon(Icons.numbers_outlined),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _serialNumber,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Serial Number (optional)',
+                  prefixIcon: Icon(Icons.confirmation_number_outlined),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _brand,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Brand (optional)',
+                  prefixIcon: Icon(Icons.business_outlined),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _category,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Category (optional)',
+                  prefixIcon: Icon(Icons.category_outlined),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _color,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Color (optional)',
+                  prefixIcon: Icon(Icons.palette_outlined),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _description,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Description (optional)',
+                  prefixIcon: Icon(Icons.description_outlined),
                 ),
               ),
             ],
@@ -456,5 +514,56 @@ class _ActorDashboardScreenState extends State<ActorDashboardScreen> {
       case ActorRole.customer:
         return 'Customers use public verification mode.';
     }
+  }
+
+  Widget _buildAdminTools() {
+    if (widget.user.role == ActorRole.customer) {
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: widget.deps.traceabilityService.getProfile(),
+      builder: (context, snapshot) {
+        final bool isAdmin = snapshot.data?['isOrgAdmin'] == true;
+        if (!isAdmin) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const ScreenSection(
+              title: 'Admin Tools',
+              icon: Icons.admin_panel_settings_outlined,
+              child: SizedBox.shrink(),
+            ),
+            ActionCard(
+              title: 'User Approvals',
+              description:
+                  'Review pending accounts and approve or reject organization users.',
+              icon: Icons.group_add_outlined,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => OrgAdminScreen(deps: widget.deps),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            ActionCard(
+              title: 'System Health',
+              description:
+                  'Check backend, database, blockchain and email status in one place.',
+              icon: Icons.monitor_heart_outlined,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => SystemHealthScreen(deps: widget.deps),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

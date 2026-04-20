@@ -23,6 +23,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _submitting = false;
   String? _message;
   bool _success = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -67,11 +69,26 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   children: <Widget>[
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'New password',
                         prefixIcon: Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          tooltip: _obscurePassword
+                              ? 'Show password'
+                              : 'Hide password',
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -88,11 +105,26 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _confirmController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: _obscureConfirm,
+                      decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'Confirm password',
                         prefixIcon: Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          tooltip: _obscureConfirm
+                              ? 'Show password'
+                              : 'Hide password',
+                          icon: Icon(
+                            _obscureConfirm
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirm = !_obscureConfirm;
+                            });
+                          },
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {

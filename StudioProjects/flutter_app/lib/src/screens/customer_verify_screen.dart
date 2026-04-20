@@ -6,8 +6,11 @@ import 'package:flutter_app/src/services/location_service.dart';
 import 'package:flutter_app/src/theme/app_theme.dart';
 import 'package:flutter_app/src/widgets/design_system_widgets.dart';
 import 'package:flutter_app/src/widgets/modern_shell.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
+import 'package:flutter/services.dart';
 
 class CustomerVerifyScreen extends StatefulWidget {
   const CustomerVerifyScreen({
@@ -46,9 +49,41 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
       ),
     );
     if (!mounted || code == null || code.isEmpty) return;
-    final LocationResult locationResult = await widget
-        .deps
-        .locationService
+    await _verifyByIdentifier(code);
+  }
+
+  Future<void> _enterSerialManually() async {
+    final TextEditingController controller = TextEditingController();
+    final String? value = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Serial Number'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Serial Number',
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || value == null || value.isEmpty) return;
+    await _verifyByIdentifier(value);
+  }
+
+  Future<void> _verifyByIdentifier(String identifier) async {
+    final LocationResult locationResult = await widget.deps.locationService
         .getCurrentLocation();
     if (locationResult.point == null) {
       setState(() {
@@ -59,12 +94,12 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
     }
     final String result = await widget.deps.traceabilityService
         .registerPublicScan(
-          qrId: code,
+          identifier: identifier,
           location: locationResult.point!,
         );
     setState(() {
       _verificationResult = result;
-      _record = widget.deps.traceabilityService.getProduct(code);
+      _record = widget.deps.traceabilityService.getProduct(identifier);
       _lastScanLocation = locationResult.point;
       _locationError = null;
     });
@@ -88,6 +123,12 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
               onPressed: _openScanner,
               icon: const Icon(Icons.qr_code_scanner, size: 24),
               label: const Text('Open Camera Scanner'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _enterSerialManually,
+              icon: const Icon(Icons.numbers),
+              label: const Text('Enter Serial Number'),
             ),
             const SizedBox(height: 32),
             SoftCard(
@@ -141,6 +182,34 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
                           '${_record!.name} (${_record!.id})',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
+                        if (_record!.serialNumber != null &&
+                            _record!.serialNumber!.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 6),
+                          Text('Serial: ${_record!.serialNumber}'),
+                        ],
+                        if (_record!.brand != null &&
+                            _record!.brand!.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 6),
+                          Text('Brand: ${_record!.brand}'),
+                        ],
+                        if (_record!.category != null &&
+                            _record!.category!.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 6),
+                          Text('Category: ${_record!.category}'),
+                        ],
+                        if (_record!.color != null &&
+                            _record!.color!.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 6),
+                          Text('Color: ${_record!.color}'),
+                        ],
+                        if (_record!.description != null &&
+                            _record!.description!.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 8),
+                          Text(
+                            _record!.description!,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         _productStatusBadge(_record!.status),
                       ],
@@ -171,6 +240,10 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
                 icon: Icons.public,
               ),
               const SizedBox(height: 14),
+              _buildShareRow(_record!.id),
+              const SizedBox(height: 16),
+              _buildTrustMap(_record!.id),
+              const SizedBox(height: 16),
               ..._scanHistoryCards(_record!.id),
             ],
           ],
@@ -192,8 +265,8 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
                 Container(
                   width: 12,
                   height: 12,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.brand,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -201,7 +274,9 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
                   Container(
                     width: 2,
                     height: 120,
-                    color: AppTheme.brand.withOpacity(0.25),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.25),
                   ),
               ],
             ),
@@ -234,20 +309,16 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
                     const SizedBox(height: 8),
                     Text(event.note),
                     const SizedBox(height: 6),
-                    Text(
-                      'When: ${_formatEventDate(event.timestamp)}',
-                    ),
+                    Text('When: ${_formatEventDate(event.timestamp)}'),
                     const SizedBox(height: 4),
-                    Text(
-                      'Where: ${_formatLocation(event.location)}',
-                    ),
+                    Text('Where: ${_formatLocation(event.location)}'),
                     const SizedBox(height: 10),
                     InkWell(
                       onTap: () => _openTx(event.txHash),
                       child: Text(
                         'tx: ${_shortHash(event.txHash)}',
-                        style: const TextStyle(
-                          color: AppTheme.brand,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -316,19 +387,20 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
 
   String _two(int value) => value.toString().padLeft(2, '0');
 
-  Widget _chip(String label, {Color color = AppTheme.brand}) {
+  Widget _chip(String label, {Color? color}) {
+    final Color chipColor = color ?? Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: color.withOpacity(0.12),
+        color: chipColor.withOpacity(0.12),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: color,
+          color: chipColor,
         ),
       ),
     );
@@ -352,6 +424,48 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
     }
   }
 
+  Widget _buildShareRow(String qrId) {
+    final String url = widget.deps.traceabilityService.publicProductUrl(qrId);
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => _openUrl(url),
+            icon: const Icon(Icons.open_in_browser_outlined),
+            label: const Text('Open Public Page'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        OutlinedButton.icon(
+          onPressed: () => _copyLink(url),
+          icon: const Icon(Icons.share_outlined),
+          label: const Text('Copy Link'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    final bool opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open public link.')),
+      );
+    }
+  }
+
+  Future<void> _copyLink(String url) async {
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Public link copied.')));
+  }
+
   Widget _productStatusBadge(ProductStatus status) {
     switch (status) {
       case ProductStatus.sold:
@@ -372,8 +486,8 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
   }
 
   List<Widget> _scanHistoryCards(String qrId) {
-    final List<PublicScanEvent> scans =
-        widget.deps.traceabilityService.publicScansFor(qrId);
+    final List<PublicScanEvent> scans = widget.deps.traceabilityService
+        .publicScansFor(qrId);
     if (scans.isEmpty) {
       return <Widget>[
         SoftCard(child: const Text('No public scans recorded yet.')),
@@ -394,8 +508,10 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Icon(Icons.warning_amber_rounded,
-                          color: AppTheme.danger),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppTheme.danger,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -421,6 +537,105 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
     }).toList();
   }
 
+  Widget _buildTrustMap(String qrId) {
+    final List<PublicScanEvent> scans = widget.deps.traceabilityService
+        .publicScansFor(qrId);
+    if (scans.isEmpty) {
+      return SoftCard(
+        child: const Text('Scan map will appear after a public scan.'),
+      );
+    }
+
+    final List<LatLng> points = scans
+        .map((s) => LatLng(s.location.lat, s.location.lng))
+        .toList();
+    final LatLng center = points.first;
+    final _SuspicionCheck suspicion = _checkSuspiciousScans(scans);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const SectionTitle(title: 'Trust Map', icon: Icons.map_outlined),
+        const SizedBox(height: 12),
+        SoftCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              if (suspicion.isSuspicious)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppTheme.danger,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          suspicion.message,
+                          style: const TextStyle(color: AppTheme.danger),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              SizedBox(
+                height: 220,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: FlutterMap(
+                    options: MapOptions(initialCenter: center, initialZoom: 4),
+                    children: <Widget>[
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.flutter_app',
+                      ),
+                      PolylineLayer(
+                        polylines: <Polyline>[
+                          Polyline(
+                            points: points,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.6),
+                            strokeWidth: 3,
+                          ),
+                        ],
+                      ),
+                      MarkerLayer(
+                        markers: points.asMap().entries.map((entry) {
+                          final int index = entry.key;
+                          final LatLng point = entry.value;
+                          final bool isLatest = index == 0;
+                          return Marker(
+                            point: point,
+                            width: 40,
+                            height: 40,
+                            child: Icon(
+                              isLatest
+                                  ? Icons.location_on
+                                  : Icons.location_on_outlined,
+                              color: isLatest
+                                  ? AppTheme.success
+                                  : Theme.of(context).colorScheme.primary,
+                              size: isLatest ? 30 : 24,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   _SuspicionCheck _checkSuspiciousScans(List<PublicScanEvent> scans) {
     if (scans.length < 2) {
       return const _SuspicionCheck(false, '');
@@ -428,10 +643,8 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
 
     final PublicScanEvent latest = scans.first;
     final PublicScanEvent previous = scans[1];
-    final double km =
-        _distanceKm(latest.location, previous.location);
-    final Duration diff =
-        latest.timestamp.difference(previous.timestamp).abs();
+    final double km = _distanceKm(latest.location, previous.location);
+    final Duration diff = latest.timestamp.difference(previous.timestamp).abs();
 
     const double distanceThresholdKm = 300;
     const Duration timeThreshold = Duration(days: 7);
@@ -452,7 +665,8 @@ class _CustomerVerifyScreenState extends State<CustomerVerifyScreen> {
     final double dLon = _degToRad(b.lng - a.lng);
     final double lat1 = _degToRad(a.lat);
     final double lat2 = _degToRad(b.lat);
-    final double h = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final double h =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.sin(dLon / 2) *
             math.sin(dLon / 2) *
             math.cos(lat1) *

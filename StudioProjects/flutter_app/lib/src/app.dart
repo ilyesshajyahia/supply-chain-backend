@@ -6,6 +6,9 @@ import 'package:flutter_app/src/services/location_service.dart';
 import 'package:flutter_app/src/services/traceability_service.dart';
 import 'package:flutter_app/src/theme/app_theme.dart';
 
+final ValueNotifier<ThemeMode> themeModeNotifier =
+    ValueNotifier<ThemeMode>(ThemeMode.system);
+
 class AppDependencies {
   AppDependencies({
     required this.userRepository,
@@ -35,11 +38,18 @@ class TraceabilityApp extends StatelessWidget {
       locationService: const LocationService(),
     );
 
-    return MaterialApp(
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeModeNotifier,
+      builder: (context, mode, _) {
+        return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ChainTrace',
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: mode,
       home: StartupGateScreen(deps: deps),
+        );
+      },
     );
   }
 }

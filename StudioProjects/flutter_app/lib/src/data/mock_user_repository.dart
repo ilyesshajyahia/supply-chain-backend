@@ -7,6 +7,7 @@ class MockUserRepository {
     UserAccount(
       id: 'mfg_01',
       name: 'Factory Operator',
+      orgId: 'org_001',
       role: ActorRole.manufacturer,
       allowedArea: Geofence(
         center: GeoPoint(33.5731, -7.5898),
@@ -17,6 +18,7 @@ class MockUserRepository {
     UserAccount(
       id: 'dist_01',
       name: 'Distributor Receiver',
+      orgId: 'org_001',
       role: ActorRole.distributor,
       allowedArea: Geofence(
         center: GeoPoint(34.0209, -6.8416),
@@ -27,6 +29,7 @@ class MockUserRepository {
     UserAccount(
       id: 'res_01',
       name: 'Reseller Agent',
+      orgId: 'org_001',
       role: ActorRole.reseller,
       allowedArea: Geofence(
         center: GeoPoint(35.7595, -5.8340),

@@ -38,12 +38,14 @@ class UserAccount {
   const UserAccount({
     required this.id,
     required this.name,
+    required this.orgId,
     required this.role,
     required this.allowedArea,
   });
 
   final String id;
   final String name;
+  final String orgId;
   final ActorRole role;
   final Geofence allowedArea;
 }
@@ -79,10 +81,20 @@ class ProductRecord {
     required this.status,
     required this.currentOwner,
     required this.events,
+    this.serialNumber,
+    this.brand,
+    this.category,
+    this.color,
+    this.description,
   });
 
   final String id;
   final String name;
+  final String? serialNumber;
+  final String? brand;
+  final String? category;
+  final String? color;
+  final String? description;
   ProductStatus status;
   ActorRole currentOwner;
   final List<LifecycleEvent> events;
@@ -99,6 +111,30 @@ class PublicScanEvent {
   final DateTime timestamp;
   final GeoPoint location;
   final String result;
+}
+
+class InternalChatMessage {
+  const InternalChatMessage({
+    required this.id,
+    required this.qrId,
+    required this.byUserId,
+    required this.byName,
+    required this.byRole,
+    required this.text,
+    required this.createdAt,
+    required this.seenByCount,
+    required this.seenByMe,
+  });
+
+  final String id;
+  final String? qrId;
+  final String byUserId;
+  final String byName;
+  final ActorRole byRole;
+  final String text;
+  final DateTime createdAt;
+  final int seenByCount;
+  final bool seenByMe;
 }
 
 String roleLabel(ActorRole role) {

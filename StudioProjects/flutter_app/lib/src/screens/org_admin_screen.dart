@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_app/src/app.dart';
 import 'package:flutter_app/src/widgets/modern_shell.dart';
 import 'package:flutter_app/src/widgets/design_system_widgets.dart';
@@ -74,15 +74,7 @@ class _OrgAdminScreenState extends State<OrgAdminScreen> {
             : ListView(
                 children: <Widget>[
                   if (_error != null) ...<Widget>[
-                    SoftCard(
-                      child: Row(
-                        children: <Widget>[
-                          const Icon(Icons.error_outline, color: Colors.red),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(_error!)),
-                        ],
-                      ),
-                    ),
+                    AlertBanner(message: _error!),
                     const SizedBox(height: 16),
                   ],
                   const ScreenSection(
@@ -121,7 +113,7 @@ class _OrgAdminScreenState extends State<OrgAdminScreen> {
                                   children: <Widget>[
                                     FilledButton.icon(
                                       onPressed: () => _toggleActive(
-                                        u['id'] as String,
+                                        _userId(u),
                                         true,
                                       ),
                                       icon: const Icon(Icons.check_circle),
@@ -130,7 +122,7 @@ class _OrgAdminScreenState extends State<OrgAdminScreen> {
                                     const SizedBox(width: 10),
                                     OutlinedButton.icon(
                                       onPressed: () => _toggleActive(
-                                        u['id'] as String,
+                                        _userId(u),
                                         false,
                                       ),
                                       icon: const Icon(Icons.block),
@@ -155,7 +147,7 @@ class _OrgAdminScreenState extends State<OrgAdminScreen> {
                             contentPadding: EdgeInsets.zero,
                             title: Text(u['name'] as String? ?? 'User'),
                             subtitle: Text(
-                              '${u['email'] ?? ''} � ${u['role'] ?? ''}',
+                              '${u['email'] ?? ''} • ${u['role'] ?? ''}',
                             ),
                             trailing: StatusBadge(
                               label: (u['isActive'] == true)
@@ -178,20 +170,25 @@ class _OrgAdminScreenState extends State<OrgAdminScreen> {
   }
 
   Widget _chip(String label) {
+    final Color color = Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: AppTheme.brand.withOpacity(0.12),
+        color: color.withOpacity(0.12),
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: AppTheme.brand,
+          color: color,
         ),
       ),
     );
+  }
+
+  String _userId(Map<String, dynamic> user) {
+    return (user['id'] as String?) ?? (user['_id'] as String?) ?? '';
   }
 }

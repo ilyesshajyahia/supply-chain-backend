@@ -132,6 +132,7 @@ class _StartupGateScreenState extends State<StartupGateScreen> {
         final UserAccount account = UserAccount(
           id: profile['id'] as String? ?? '',
           name: profile['name'] as String? ?? 'User',
+          orgId: profile['orgId'] as String? ?? 'org_001',
           role: role,
           allowedArea: zone,
         );

@@ -14,7 +14,6 @@ class ScanQrScreen extends StatefulWidget {
 class _ScanQrScreenState extends State<ScanQrScreen> {
   final MobileScannerController _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
-    formats: <BarcodeFormat>[BarcodeFormat.qrCode],
   );
   bool _handled = false;
 
@@ -63,13 +62,17 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: AppTheme.softShadow,
               ),
-              child: const Row(
+              child: Row(
                 children: <Widget>[
-                  Icon(Icons.qr_code_scanner, color: AppTheme.brand, size: 24),
+                  Icon(
+                    Icons.qr_code_scanner,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 24,
+                  ),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Point the camera at the product QR code to continue.',
+                      'Point the camera at the product QR or serial barcode.',
                     ),
                   ),
                 ],

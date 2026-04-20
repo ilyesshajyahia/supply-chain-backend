@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ChainTrace Admin Panel</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary": "#ffffff",
+              "inverse-primary": "#afc7f5",
+              "on-secondary-fixed-variant": "#004881",
+              "tertiary-container": "#442100",
+              "surface-container-low": "#f2f4f7",
+              "outline": "#74777f",
+              "surface-dim": "#d8dadd",
+              "on-primary": "#ffffff",
+              "surface-container-high": "#e6e8eb",
+              "inverse-on-surface": "#eff1f4",
+              "on-surface": "#191c1e",
+              "on-primary-fixed": "#001b3d",
+              "surface-bright": "#f7f9fc",
+              "on-tertiary-fixed": "#2f1500",
+              "primary": "#001533",
+              "on-error-container": "#93000a",
+              "primary-fixed-dim": "#afc7f5",
+              "on-tertiary-container": "#bc865a",
+              "on-primary-container": "#7b92bd",
+              "background": "#f7f9fc",
+              "error": "#ba1a1a",
+              "error-container": "#ffdad6",
+              "surface-container-highest": "#e0e3e6",
+              "tertiary": "#261000",
+              "on-tertiary-fixed-variant": "#663d17",
+              "tertiary-fixed-dim": "#f7ba8a",
+              "surface-container": "#eceef1",
+              "primary-container": "#0f2a4f",
+              "secondary-fixed": "#d3e4ff",
+              "on-secondary-container": "#003663",
+              "inverse-surface": "#2d3133",
+              "surface-container-lowest": "#ffffff",
+              "surface-tint": "#475f87",
+              "on-background": "#191c1e",
+              "surface": "#f7f9fc",
+              "outline-variant": "#c4c6cf",
+              "primary-fixed": "#d6e3ff",
+              "on-surface-variant": "#44474e",
+              "secondary": "#0060a8",
+              "tertiary-fixed": "#ffdcc3",
+              "surface-variant": "#e0e3e6",
+              "secondary-fixed-dim": "#a2c9ff",
+              "on-tertiary": "#ffffff",
+              "on-error": "#ffffff",
+              "secondary-container": "#47a1ff",
+              "on-secondary-fixed": "#001c38",
+              "on-primary-fixed-variant": "#2f476e",
+              "success": "#1B8F5A",
+              "success-container": "#22C55E1A"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#f7f9fc]/80 backdrop-blur-xl shadow-[0_32px_64px_rgba(15,42,79,0.05)]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 duration-200" data-icon="arrow_back">arrow_back</span>
+<h1 class="text-xl font-black tracking-tighter text-[#001533] uppercase">ChainTrace</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8">
+<span class="text-[#001533] font-bold cursor-pointer transition-opacity hover:opacity-80">Dashboard</span>
+<span class="text-[#4A5B6A] cursor-pointer transition-opacity hover:opacity-80">History</span>
+<span class="text-[#4A5B6A] cursor-pointer transition-opacity hover:opacity-80">Settings</span>
+</nav>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/20 shadow-sm cursor-pointer active:scale-95 duration-200">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="professional portrait of a senior system administrator in a modern office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuDePDRR1rz6R9Cp7lF9D8doDdUvZYpVEG2R1pyL0J7BNRZJE7yrRWqMKwJorNmUzbphCy5ppVDI_HvfvCmkySGX_KgqenBX0zSbPwX1hL5MyXuHsqwFiyOKgYJpLWmUEQZz0DGC5o4Go_Ra1xywkeoA1EmE1_dz22qXwgc3wMROI8OahlcEfvm9fxsz2Sqm1aCK9EGrDwgqXyO6sA6LXUKkCZnIGllNbYCyHz4E5hsHxKOBEgQOApWyN_rAnLGAEUnqUxLp92T40s"/>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-7xl mx-auto space-y-12">
+<!-- Hero Section / Title -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-2">
+<h2 class="text-3xl font-extrabold tracking-tight text-primary">Identity Governance</h2>
+<p class="text-[#4A5B6A] font-medium">Oversee network participants and verify institutional credentials.</p>
+</div>
+<div class="flex gap-3">
+<div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-2 border border-outline-variant/10">
+<span class="w-2 h-2 rounded-full bg-success"></span>
+<span class="text-xs font-bold uppercase tracking-wider text-primary">Network Status: Active</span>
+</div>
+</div>
+</section>
+<!-- Bento Grid: Pending Approvals -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold tracking-tight text-primary uppercase">Pending Approvals</h3>
+<span class="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full">3 REQUESTS</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Approval Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_32px_rgba(15,42,79,0.04)] space-y-4 border border-outline-variant/10 transition-transform hover:-translate-y-1">
+<div class="flex items-start justify-between">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
+</div>
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">2m ago</span>
+</div>
+<div>
+<p class="font-bold text-primary text-lg">Alexandre Volkov</p>
+<p class="text-sm text-[#4A5B6A]">Lead Compliance Officer</p>
+<p class="text-xs font-bold text-secondary mt-1">Nordic Trust Group</p>
+</div>
+<div class="flex gap-2 pt-2">
+<button class="flex-1 bg-success text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all">Approve</button>
+<button class="flex-1 bg-error text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all">Reject</button>
+</div>
+</div>
+<!-- Approval Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_32px_rgba(15,42,79,0.04)] space-y-4 border border-outline-variant/10 transition-transform hover:-translate-y-1">
+<div class="flex items-start justify-between">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="domain">domain</span>
+</div>
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">1h ago</span>
+</div>
+<div>
+<p class="font-bold text-primary text-lg">Sarah Chen</p>
+<p class="text-sm text-[#4A5B6A]">Operations Director</p>
+<p class="text-xs font-bold text-secondary mt-1">Apex Logistics Corp</p>
+</div>
+<div class="flex gap-2 pt-2">
+<button class="flex-1 bg-success text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all">Approve</button>
+<button class="flex-1 bg-error text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all">Reject</button>
+</div>
+</div>
+<!-- Approval Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_8px_32px_rgba(15,42,79,0.04)] space-y-4 border border-outline-variant/10 transition-transform hover:-translate-y-1">
+<div class="flex items-start justify-between">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="shield_person">shield_person</span>
+</div>
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">4h ago</span>
+</div>
+<div>
+<p class="font-bold text-primary text-lg">Marcus Thorne</p>
+<p class="text-sm text-[#4A5B6A]">Security Auditor</p>
+<p class="text-xs font-bold text-secondary mt-1">VeriChain Solutions</p>
+</div>
+<div class="flex gap-2 pt-2">
+<button class="flex-1 bg-success text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all">Approve</button>
+<button class="flex-1 bg-error text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all">Reject</button>
+</div>
+</div>
+</div>
+</section>
+<!-- All Users Section -->
+<section class="space-y-6">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<h3 class="text-lg font-bold tracking-tight text-primary uppercase">User Directory</h3>
+<div class="relative w-full md:w-96">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
+<input class="w-full pl-12 pr-4 py-3 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-outline/60" placeholder="Search by name, role or organization..." type="text"/>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_rgba(15,42,79,0.04)] overflow-hidden border border-outline-variant/10">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[11px] font-black text-outline uppercase tracking-widest">User Details</th>
+<th class="px-6 py-4 text-[11px] font-black text-outline uppercase tracking-widest">Organization</th>
+<th class="px-6 py-4 text-[11px] font-black text-outline uppercase tracking-widest">Status</th>
+<th class="px-6 py-4 text-[11px] font-black text-outline uppercase tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Table Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">EK</div>
+<div>
+<p class="font-bold text-primary">Elena Kostova</p>
+<p class="text-xs text-[#4A5B6A]">System Admin</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<p class="text-sm font-medium text-primary">Global Ledger Systems</p>
+<p class="text-[10px] text-outline uppercase font-bold tracking-tighter">Enterprise Plan</p>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-success/10 text-success uppercase tracking-widest">Active</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 rounded-lg hover:bg-surface-container-high transition-colors text-[#4A5B6A]">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Table Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary text-xs font-bold">JM</div>
+<div>
+<p class="font-bold text-primary">Julian Moore</p>
+<p class="text-xs text-[#4A5B6A]">Data Scientist</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<p class="text-sm font-medium text-primary">BioTrace Pharma</p>
+<p class="text-[10px] text-outline uppercase font-bold tracking-tighter">Validator Node</p>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-amber-500/10 text-amber-600 uppercase tracking-widest">Pending</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 rounded-lg hover:bg-surface-container-high transition-colors text-[#4A5B6A]">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Table Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-error-container/20 flex items-center justify-center text-error text-xs font-bold">DR</div>
+<div>
+<p class="font-bold text-primary">David Russo</p>
+<p class="text-xs text-[#4A5B6A]">Junior Dev</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<p class="text-sm font-medium text-primary">Freelance Agent</p>
+<p class="text-[10px] text-outline uppercase font-bold tracking-tighter">Tier 1 Access</p>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-error/10 text-error uppercase tracking-widest">Rejected</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 rounded-lg hover:bg-surface-container-high transition-colors text-[#4A5B6A]">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-surface-container-low/30 border-t border-outline-variant/10 flex items-center justify-between">
+<p class="text-xs text-outline font-medium">Showing 3 of 124 network participants</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant/20 text-primary text-xs font-bold hover:bg-surface-container-high transition-colors disabled:opacity-50" disabled="">PREV</button>
+<button class="px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant/20 text-primary text-xs font-bold hover:bg-surface-container-high transition-colors">NEXT</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-end pb-6 px-8 h-24 bg-[#f7f9fc]/80 backdrop-blur-xl border-t border-[#c4c6cf]/15 shadow-[0_-8px_32px_rgba(15,42,79,0.04)] rounded-t-[20px]">
+<div class="flex flex-col items-center justify-center bg-[#001533] text-white rounded-full p-3 scale-110 -translate-y-2 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] font-medium text-[11px] uppercase tracking-widest mt-1">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#4A5B6A] p-2 hover:text-[#001533] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-['Inter'] font-medium text-[11px] uppercase tracking-widest mt-1">History</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#4A5B6A] p-2 hover:text-[#001533] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Inter'] font-medium text-[11px] uppercase tracking-widest mt-1">Settings</span>
+</div>
+</nav>
+<!-- FAB for Action (Contextual: User Creation) -->
+<button class="fixed bottom-32 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 duration-200 transition-transform group md:bottom-12">
+<span class="material-symbols-outlined text-3xl" data-icon="person_add">person_add</span>
+</button>
+</body></html>

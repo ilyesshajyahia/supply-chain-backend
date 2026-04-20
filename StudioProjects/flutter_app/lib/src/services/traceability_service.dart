@@ -21,6 +21,7 @@ class TraceabilityService {
   final String lifecycleAddress;
 
   final Map<String, ProductRecord> _products = <String, ProductRecord>{};
+  final Map<String, String> _productIdentifierToQr = <String, String>{};
   final Map<String, Set<String>> _verifiedTxHashesByProduct =
       <String, Set<String>>{};
   final Map<String, List<PublicScanEvent>> _publicScansByQr =
@@ -33,7 +34,19 @@ class TraceabilityService {
   static const String _tokenKey = 'auth_token';
   static const String _userIdKey = 'auth_user_id';
 
-  ProductRecord? getProduct(String id) => _products[id];
+  ProductRecord? getProduct(String id) {
+    final String key = id.trim();
+    if (key.isEmpty) return null;
+    final String? qr = _productIdentifierToQr[key];
+    if (qr != null && qr.isNotEmpty) return _products[qr];
+    return _products[key];
+  }
+
+  String publicProductUrl(String qrId) {
+    String base = backendBaseUrl;
+    base = base.replaceFirst(RegExp(r'/api/v1/?$'), '');
+    return '$base/public/qr/$qrId';
+  }
 
   Future<void> checkBackendHealth() async {
     final Uri uri = Uri.parse('$backendBaseUrl/health');
@@ -48,6 +61,20 @@ class TraceabilityService {
         jsonDecode(response.body) as Map<String, dynamic>;
     if (json['ok'] != true) {
       throw StateError('Backend health response invalid');
+    }
+  }
+
+  Future<Map<String, dynamic>?> getSystemHealth() async {
+    try {
+      final Uri uri = Uri.parse('$backendBaseUrl/health/details');
+      final http.Response response = await _httpClient.get(uri);
+      if (response.statusCode != 200) return null;
+      final Map<String, dynamic> json =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      if (json['ok'] != true) return null;
+      return json;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -112,10 +139,7 @@ class TraceabilityService {
         final Map<String, dynamic> user =
             (data['user'] as Map<String, dynamic>?) ?? <String, dynamic>{};
         _authUserId = user['id'] as String?;
-        await _persistSession(
-          token: _authToken,
-          userId: _authUserId,
-        );
+        await _persistSession(token: _authToken, userId: _authUserId);
         return <String, dynamic>{
           'ok': true,
           'token': data['token'],
@@ -160,10 +184,13 @@ class TraceabilityService {
   Future<Map<String, dynamic>?> getProfile() async {
     try {
       final Uri uri = Uri.parse('$backendBaseUrl/auth/me');
-      final http.Response response = await _httpClient.get(
+      http.Response response = await _httpClient.get(
         uri,
         headers: _authorizedHeaders(),
       );
+      if (response.statusCode == 401 && await refreshToken()) {
+        response = await _httpClient.get(uri, headers: _authorizedHeaders());
+      }
       if (response.statusCode != 200) return null;
       final Map<String, dynamic> body =
           jsonDecode(response.body) as Map<String, dynamic>;
@@ -202,18 +229,19 @@ class TraceabilityService {
   Future<List<Map<String, dynamic>>> listOrgUsers() async {
     try {
       final Uri uri = Uri.parse('$backendBaseUrl/org/users');
-      final http.Response response = await _httpClient.get(
+      http.Response response = await _httpClient.get(
         uri,
         headers: _authorizedHeaders(),
       );
+      if (response.statusCode == 401 && await refreshToken()) {
+        response = await _httpClient.get(uri, headers: _authorizedHeaders());
+      }
       if (response.statusCode != 200) return <Map<String, dynamic>>[];
       final Map<String, dynamic> body =
           jsonDecode(response.body) as Map<String, dynamic>;
       if (body['ok'] != true) return <Map<String, dynamic>>[];
       final List<dynamic> data = body['data'] as List<dynamic>? ?? <dynamic>[];
-      return data
-          .map((dynamic item) => item as Map<String, dynamic>)
-          .toList();
+      return data.map((dynamic item) => item as Map<String, dynamic>).toList();
     } catch (_) {
       return <Map<String, dynamic>>[];
     }
@@ -225,14 +253,101 @@ class TraceabilityService {
   }) async {
     try {
       final Uri uri = Uri.parse('$backendBaseUrl/org/users/$userId/active');
-      final http.Response response = await _httpClient.patch(
+      http.Response response = await _httpClient.patch(
         uri,
         headers: _authorizedHeaders(),
         body: jsonEncode(<String, dynamic>{'isActive': isActive}),
       );
+      if (response.statusCode == 401 && await refreshToken()) {
+        response = await _httpClient.patch(
+          uri,
+          headers: _authorizedHeaders(),
+          body: jsonEncode(<String, dynamic>{'isActive': isActive}),
+        );
+      }
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (_) {
       return false;
+    }
+  }
+
+  Future<List<InternalChatMessage>> listInternalChatMessages({
+    String? qrId,
+    int limit = 50,
+  }) async {
+    try {
+      final String queryQr = (qrId == null || qrId.trim().isEmpty)
+          ? ''
+          : '&qrId=${Uri.encodeQueryComponent(qrId.trim())}';
+      final Uri uri = Uri.parse(
+        '$backendBaseUrl/chat/messages?limit=$limit$queryQr',
+      );
+      http.Response response = await _httpClient.get(
+        uri,
+        headers: _authorizedHeaders(),
+      );
+      if (response.statusCode == 401 && await refreshToken()) {
+        response = await _httpClient.get(uri, headers: _authorizedHeaders());
+      }
+      if (response.statusCode != 200) return <InternalChatMessage>[];
+      final Map<String, dynamic> body =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      if (body['ok'] != true) return <InternalChatMessage>[];
+      final List<dynamic> rows = body['data'] as List<dynamic>? ?? <dynamic>[];
+      return rows.map((dynamic item) {
+        final Map<String, dynamic> raw = item as Map<String, dynamic>;
+        final String? qr = raw['qrId'] as String?;
+        return InternalChatMessage(
+          id: (raw['id'] as String?) ?? (raw['_id'] as String?) ?? '',
+          qrId: qr,
+          byUserId: (raw['byUserId'] as String?) ?? '',
+          byName: raw['byName'] as String? ?? 'User',
+          byRole: actorRoleFromKey(raw['byRole'] as String? ?? 'customer'),
+          text: raw['text'] as String? ?? '',
+          createdAt:
+              DateTime.tryParse(raw['createdAt'] as String? ?? '') ??
+              DateTime.now(),
+          seenByCount: (raw['seenByCount'] as num?)?.toInt() ?? 0,
+          seenByMe: raw['seenByMe'] == true,
+        );
+      }).toList();
+    } catch (_) {
+      return <InternalChatMessage>[];
+    }
+  }
+
+  Future<String> sendInternalChatMessage({
+    required String text,
+    String? qrId,
+  }) async {
+    try {
+      final Map<String, dynamic> payload = <String, dynamic>{'text': text};
+      if (qrId != null && qrId.trim().isNotEmpty) {
+        payload['qrId'] = qrId.trim();
+      }
+
+      final Uri uri = Uri.parse('$backendBaseUrl/chat/messages');
+      http.Response response = await _httpClient.post(
+        uri,
+        headers: _authorizedHeaders(),
+        body: jsonEncode(payload),
+      );
+      if (response.statusCode == 401 && await refreshToken()) {
+        response = await _httpClient.post(
+          uri,
+          headers: _authorizedHeaders(),
+          body: jsonEncode(payload),
+        );
+      }
+      final Map<String, dynamic> body =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return 'Message sent.';
+      }
+      return (body['message'] as String?) ??
+          'Could not send message (${response.statusCode}).';
+    } catch (_) {
+      return 'Backend unreachable. Check server connection and try again.';
     }
   }
 
@@ -338,6 +453,11 @@ class TraceabilityService {
     Geofence? allowedAreaOverride,
     int? productIdOnChain,
     String? productName,
+    String? serialNumber,
+    String? brand,
+    String? category,
+    String? color,
+    String? description,
     bool finalizeSale = false,
   }) async {
     final Geofence allowedArea = allowedAreaOverride ?? account.allowedArea;
@@ -364,6 +484,14 @@ class TraceabilityService {
             'qrId': productId,
             'productIdOnChain': chainId,
             'name': productName.trim(),
+            if (serialNumber != null && serialNumber.trim().isNotEmpty)
+              'serialNumber': serialNumber.trim(),
+            if (brand != null && brand.trim().isNotEmpty) 'brand': brand.trim(),
+            if (category != null && category.trim().isNotEmpty)
+              'category': category.trim(),
+            if (color != null && color.trim().isNotEmpty) 'color': color.trim(),
+            if (description != null && description.trim().isNotEmpty)
+              'description': description.trim(),
             'longitude': location.lng,
             'latitude': location.lat,
           }),
@@ -377,6 +505,16 @@ class TraceabilityService {
               'qrId': productId,
               'productIdOnChain': chainId,
               'name': productName.trim(),
+              if (serialNumber != null && serialNumber.trim().isNotEmpty)
+                'serialNumber': serialNumber.trim(),
+              if (brand != null && brand.trim().isNotEmpty)
+                'brand': brand.trim(),
+              if (category != null && category.trim().isNotEmpty)
+                'category': category.trim(),
+              if (color != null && color.trim().isNotEmpty)
+                'color': color.trim(),
+              if (description != null && description.trim().isNotEmpty)
+                'description': description.trim(),
               'longitude': location.lng,
               'latitude': location.lat,
             }),
@@ -457,7 +595,7 @@ class TraceabilityService {
       _publicScansByQr[qrId] ?? <PublicScanEvent>[];
 
   Future<String> registerPublicScan({
-    required String qrId,
+    required String identifier,
     required GeoPoint location,
   }) async {
     try {
@@ -465,7 +603,7 @@ class TraceabilityService {
         Uri.parse('$backendBaseUrl/scans/public'),
         headers: <String, String>{'Content-Type': 'application/json'},
         body: jsonEncode(<String, dynamic>{
-          'qrId': qrId,
+          'identifier': identifier,
           'longitude': location.lng,
           'latitude': location.lat,
         }),
@@ -474,13 +612,13 @@ class TraceabilityService {
         return 'Scan failed (${scanResponse.statusCode}).';
       }
 
-      final ProductRecord? record = await _fetchHistoryFromBackend(qrId);
+      final ProductRecord? record = await _fetchHistoryFromBackend(identifier);
       if (record == null) {
-        await _fetchPublicScanHistory(qrId);
-        return 'Unknown QR code.';
+        await _fetchPublicScanHistory(identifier);
+        return 'Unknown product identifier.';
       }
       final int verifiedCount = await _verifyEventsOnChain(record);
-      await _fetchPublicScanHistory(qrId);
+      await _fetchPublicScanHistory(record.id);
       if (verifiedCount == record.events.length) {
         return 'Product verified on-chain.';
       }
@@ -490,15 +628,18 @@ class TraceabilityService {
     }
   }
 
-  Future<void> _fetchPublicScanHistory(String qrId) async {
-    final Uri uri = Uri.parse('$backendBaseUrl/scans/public/$qrId/history');
+  Future<void> _fetchPublicScanHistory(String identifier) async {
+    final Uri uri = Uri.parse(
+      '$backendBaseUrl/scans/public/${Uri.encodeComponent(identifier)}/history',
+    );
     final http.Response response = await _httpClient.get(uri);
     if (response.statusCode != 200) return;
     final Map<String, dynamic> json =
         jsonDecode(response.body) as Map<String, dynamic>;
     if (json['ok'] != true) return;
     final Map<String, dynamic> data = json['data'] as Map<String, dynamic>;
-    final List<dynamic> scansRaw = data['scans'] as List<dynamic>? ?? <dynamic>[];
+    final List<dynamic> scansRaw =
+        data['scans'] as List<dynamic>? ?? <dynamic>[];
     final List<PublicScanEvent> scans = scansRaw.map((dynamic item) {
       final Map<String, dynamic> raw = item as Map<String, dynamic>;
       final Map<String, dynamic> location =
@@ -516,11 +657,13 @@ class TraceabilityService {
         result: raw['result'] as String? ?? 'verified',
       );
     }).toList();
-    _publicScansByQr[qrId] = scans;
+    _publicScansByQr[identifier] = scans;
   }
 
-  Future<ProductRecord?> _fetchHistoryFromBackend(String qrId) async {
-    final Uri uri = Uri.parse('$backendBaseUrl/products/$qrId/history');
+  Future<ProductRecord?> _fetchHistoryFromBackend(String identifier) async {
+    final Uri uri = Uri.parse(
+      '$backendBaseUrl/products/${Uri.encodeComponent(identifier)}/history',
+    );
     final http.Response response = await _httpClient.get(uri);
     if (response.statusCode == 404) return null;
     if (response.statusCode != 200) {
@@ -544,8 +687,18 @@ class TraceabilityService {
       status: _statusFromBackend(product['status'] as String),
       currentOwner: _roleFromBackend(product['currentOwnerRole'] as String),
       events: events,
+      serialNumber: product['serialNumber'] as String?,
+      brand: product['brand'] as String?,
+      category: product['category'] as String?,
+      color: product['color'] as String?,
+      description: product['description'] as String?,
     );
     _products[record.id] = record;
+    _productIdentifierToQr[record.id] = record.id;
+    _productIdentifierToQr[identifier] = record.id;
+    if (record.serialNumber != null && record.serialNumber!.isNotEmpty) {
+      _productIdentifierToQr[record.serialNumber!] = record.id;
+    }
     return record;
   }
 
@@ -559,8 +712,9 @@ class TraceabilityService {
         location['coordinates'] as List<dynamic>? ?? <dynamic>[0, 0];
     final String decoded =
         (meta['eventType'] as String?) ?? _defaultDecodedFromAction(action);
-    final String normalizedDecoded =
-        decoded == 'Retail' ? 'Distributed' : decoded;
+    final String normalizedDecoded = decoded == 'Retail'
+        ? 'Distributed'
+        : decoded;
     final String txHash = raw['txHash'] as String? ?? '';
     final int blockNumber = (raw['blockNumber'] as num?)?.toInt() ?? 0;
 
@@ -755,6 +909,11 @@ class TraceabilityService {
           status: ProductStatus.atManufacturer,
           currentOwner: ActorRole.manufacturer,
           events: <LifecycleEvent>[],
+          serialNumber: data['serialNumber'] as String?,
+          brand: data['brand'] as String?,
+          category: data['category'] as String?,
+          color: data['color'] as String?,
+          description: data['description'] as String?,
         );
     final ProductRecord updated = ProductRecord(
       id: qrId,
@@ -766,9 +925,18 @@ class TraceabilityService {
         data['currentOwnerRole'] as String? ?? 'manufacturer',
       ),
       events: current.events,
+      serialNumber: data['serialNumber'] as String? ?? current.serialNumber,
+      brand: data['brand'] as String? ?? current.brand,
+      category: data['category'] as String? ?? current.category,
+      color: data['color'] as String? ?? current.color,
+      description: data['description'] as String? ?? current.description,
     );
     updated.soldScanCount = current.soldScanCount;
     _products[qrId] = updated;
+    _productIdentifierToQr[qrId] = qrId;
+    if (updated.serialNumber != null && updated.serialNumber!.isNotEmpty) {
+      _productIdentifierToQr[updated.serialNumber!] = qrId;
+    }
   }
 
   int _deterministicOnChainId(String qrId) {

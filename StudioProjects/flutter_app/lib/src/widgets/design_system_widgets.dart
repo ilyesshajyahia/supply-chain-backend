@@ -13,11 +13,21 @@ class ElevatedSurfaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color cardColor = theme.cardTheme.color ?? theme.colorScheme.surface;
+    final Color borderColor =
+        theme.brightness == Brightness.dark
+            ? Colors.white.withOpacity(0.06)
+            : const Color(0x1A001533);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: AppTheme.softShadow,
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
+        boxShadow:
+            theme.brightness == Brightness.dark
+                ? AppTheme.softShadowDark
+                : AppTheme.softShadow,
       ),
       child: Padding(padding: EdgeInsets.all(padding), child: child),
     );
@@ -35,7 +45,7 @@ class SectionTitle extends StatelessWidget {
     return Row(
       children: <Widget>[
         if (icon != null) ...<Widget>[
-          Icon(icon, size: 22, color: AppTheme.brand),
+          Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 10),
         ],
         Text(title, style: Theme.of(context).textTheme.titleMedium),
@@ -79,6 +89,40 @@ class StatusBadge extends StatelessWidget {
               fontSize: 13.5,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class AlertBanner extends StatelessWidget {
+  const AlertBanner({
+    super.key,
+    required this.message,
+    this.icon,
+    this.color,
+  });
+
+  final String message;
+  final IconData? icon;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color resolvedColor =
+        color ?? Theme.of(context).colorScheme.error;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: resolvedColor.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: resolvedColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(icon ?? Icons.error_outline, color: resolvedColor),
+          const SizedBox(width: 10),
+          Expanded(child: Text(message)),
         ],
       ),
     );
