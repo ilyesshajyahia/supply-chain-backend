@@ -37,4 +37,40 @@ const gasMetrics = asyncHandler(async (req, res) => {
   res.json({ ok: true, data });
 });
 
-module.exports = { listUsers, setUserActive, setUserOrgAdmin, gasMetrics };
+const anchorStatus = asyncHandler(async (req, res) => {
+  const data = await orgService.getOrgAnchorStatus(req.user.orgId);
+  res.json({ ok: true, data });
+});
+
+const listAnchors = asyncHandler(async (req, res) => {
+  const data = await orgService.listOrgAnchors({
+    orgId: req.user.orgId,
+    limit: req.query.limit,
+  });
+  res.json({ ok: true, data });
+});
+
+const runAnchor = asyncHandler(async (req, res) => {
+  const data = await orgService.runOrgAnchor({ orgId: req.user.orgId });
+  res.json({ ok: true, data });
+});
+
+const anchorProof = asyncHandler(async (req, res) => {
+  const data = await orgService.getOrgAnchorProof({
+    orgId: req.user.orgId,
+    anchorId: req.params.anchorId,
+    eventId: req.params.eventId,
+  });
+  res.json({ ok: true, data });
+});
+
+module.exports = {
+  listUsers,
+  setUserActive,
+  setUserOrgAdmin,
+  gasMetrics,
+  anchorStatus,
+  listAnchors,
+  runAnchor,
+  anchorProof,
+};

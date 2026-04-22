@@ -2,6 +2,12 @@ const User = require("../models/user.model");
 const ProductEvent = require("../models/productEvent.model");
 const ApiError = require("../utils/ApiError");
 const { logAuditEvent } = require("./audit.service");
+const {
+  listAnchors,
+  createAndAnchorBatch,
+  getAnchorStatus,
+  buildAnchorProof,
+} = require("./anchor.service");
 
 async function listOrgUsers(orgId) {
   return User.find({ orgId })
@@ -137,4 +143,29 @@ async function getGasMetrics({ orgId, days = 30 }) {
   };
 }
 
-module.exports = { listOrgUsers, setUserActive, setUserOrgAdmin, getGasMetrics };
+async function getOrgAnchorStatus(orgId) {
+  return getAnchorStatus(orgId);
+}
+
+async function listOrgAnchors({ orgId, limit }) {
+  return listAnchors(orgId, limit);
+}
+
+async function runOrgAnchor({ orgId }) {
+  return createAndAnchorBatch({ orgId, triggerReason: "manual" });
+}
+
+async function getOrgAnchorProof({ orgId, anchorId, eventId }) {
+  return buildAnchorProof({ orgId, anchorId, eventId });
+}
+
+module.exports = {
+  listOrgUsers,
+  setUserActive,
+  setUserOrgAdmin,
+  getGasMetrics,
+  getOrgAnchorStatus,
+  listOrgAnchors,
+  runOrgAnchor,
+  getOrgAnchorProof,
+};

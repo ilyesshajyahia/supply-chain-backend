@@ -38,6 +38,7 @@ const healthDetails = asyncHandler(async (_req, res) => {
         rpcHost: rpcHostFor(env.l1?.rpcUrl),
         registryAddress: env.l1?.productRegistryAddress || null,
         lifecycleAddress: env.l1?.productLifecycleAddress || null,
+        anchorRegistryAddress: env.l1?.anchorRegistryAddress || null,
       },
       l2: {
         chainId: env.l2?.chainId || null,
@@ -45,6 +46,13 @@ const healthDetails = asyncHandler(async (_req, res) => {
         registryAddress: env.l2?.productRegistryAddress || null,
         lifecycleAddress: env.l2?.productLifecycleAddress || null,
       },
+    },
+    anchoring: {
+      enabled: env.l2Anchor?.enabled || false,
+      batchSize: env.l2Anchor?.batchSize || null,
+      maxAgeHours: env.l2Anchor?.maxAgeHours || null,
+      sweepMinutes: env.l2Anchor?.sweepMinutes || null,
+      hasL1AnchorRegistry: Boolean(env.l1?.anchorRegistryAddress),
     },
     email: {
       provider: env.resendApiKey ? "resend" : "smtp",

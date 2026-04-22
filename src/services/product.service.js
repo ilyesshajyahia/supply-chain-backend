@@ -6,6 +6,7 @@ const ScanEvent = require("../models/scanEvent.model");
 const CounterfeitFlag = require("../models/counterfeitFlag.model");
 const { isInAuthorizedZone } = require("./geofence.service");
 const { addProductOnChain, addLifecycleEventOnChain } = require("./blockchain.service");
+const { maybeAnchorL2ForOrg } = require("./anchor.service");
 
 function toPoint(longitude, latitude) {
   return { type: "Point", coordinates: [Number(longitude), Number(latitude)] };
@@ -24,6 +25,16 @@ function normalizeOptionalText(value, max = 256) {
   const text = String(value || "").trim();
   if (!text) return null;
   return text.length > max ? text.slice(0, max) : text;
+}
+
+async function triggerAutoAnchorIfNeeded(orgId, network) {
+  if (String(network || "").toLowerCase() !== "l2") return;
+  try {
+    await maybeAnchorL2ForOrg(orgId);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Auto-anchor failed:", err?.message || err);
+  }
 }
 
 async function findProductByIdentifier(identifier, session = null) {
@@ -69,6 +80,7 @@ async function registerProduct({ user, payload }) {
   const session = await mongoose.startSession();
   try {
     let result;
+    let eventNetwork = null;
     await session.withTransaction(async () => {
       await ensureZone({ user, longitude, latitude, session });
 
@@ -94,6 +106,7 @@ async function registerProduct({ user, payload }) {
         locationText(longitude, latitude),
         { network }
       );
+      eventNetwork = chainResultEvent.network || chainResultProduct.network || null;
 
       const product = await Product.create(
         [
@@ -148,6 +161,7 @@ async function registerProduct({ user, payload }) {
 
       result = product[0];
     });
+    await triggerAutoAnchorIfNeeded(user.orgId, eventNetwork);
 
     return result;
   } finally {
@@ -197,6 +211,7 @@ async function transferProduct({ user, payload }) {
   const session = await mongoose.startSession();
   try {
     let updated;
+    let eventNetwork = null;
     await session.withTransaction(async () => {
       await ensureZone({ user, longitude, latitude, session });
 
@@ -216,6 +231,7 @@ async function transferProduct({ user, payload }) {
         locationText(longitude, latitude),
         { network }
       );
+      eventNetwork = chainResult.network || null;
 
       product.currentOwnerRole = rules.nextOwner;
       product.status = rules.nextStatus;
@@ -264,6 +280,7 @@ async function transferProduct({ user, payload }) {
 
       updated = product;
     });
+    await triggerAutoAnchorIfNeeded(user.orgId, eventNetwork);
 
     return updated;
   } finally {
@@ -285,6 +302,7 @@ async function finalizeSale({ user, payload }) {
   const session = await mongoose.startSession();
   try {
     let updated;
+    let eventNetwork = null;
     await session.withTransaction(async () => {
       await ensureZone({ user, longitude, latitude, session });
 
@@ -301,6 +319,7 @@ async function finalizeSale({ user, payload }) {
         locationText(longitude, latitude),
         { network }
       );
+      eventNetwork = chainResult.network || null;
 
       product.isSold = true;
       product.status = "sold";
@@ -334,6 +353,7 @@ async function finalizeSale({ user, payload }) {
 
       updated = product;
     });
+    await triggerAutoAnchorIfNeeded(user.orgId, eventNetwork);
 
     return updated;
   } finally {

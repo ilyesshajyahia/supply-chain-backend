@@ -17,6 +17,12 @@ const productLifecycleAbi = [
   "function getEvents(uint256 productID) view returns ((string eventType,address actor,uint256 timestamp,string location)[])"
 ];
 
+const anchorRegistryAbi = [
+  "function anchorBatch(bytes32 merkleRoot, uint256 fromEventIndex, uint256 toEventIndex, uint256 eventCount)",
+  "function anchorRoot(bytes32 merkleRoot)",
+  "function getLatestRoot() view returns (bytes32)",
+];
+
 function createContracts(env) {
   const build = (chainConfig) => {
     if (
@@ -53,6 +59,9 @@ function createContracts(env) {
         productLifecycleAbi,
         signer
       ),
+      anchorRegistry: chainConfig.anchorRegistryAddress
+        ? new ethers.Contract(chainConfig.anchorRegistryAddress, anchorRegistryAbi, signer)
+        : null,
     };
   };
 

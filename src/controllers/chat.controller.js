@@ -15,8 +15,15 @@ const sendMessage = asyncHandler(async (req, res) => {
     user: req.user,
     qrId: req.body.qrId,
     text: req.body.text,
+    toRoles: req.body.toRoles,
+    attachments: req.body.attachments,
   });
   res.status(201).json({ ok: true, data });
 });
 
-module.exports = { listMessages, sendMessage };
+const listParticipants = asyncHandler(async (req, res) => {
+  const data = await chatService.listParticipantsForUser(req.user);
+  res.json({ ok: true, data });
+});
+
+module.exports = { listMessages, sendMessage, listParticipants };

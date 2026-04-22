@@ -31,6 +31,8 @@ const l1 = {
     process.env.L1_PRODUCT_REGISTRY_ADDRESS || process.env.PRODUCT_REGISTRY_ADDRESS,
   productLifecycleAddress:
     process.env.L1_PRODUCT_LIFECYCLE_ADDRESS || process.env.PRODUCT_LIFECYCLE_ADDRESS,
+  anchorRegistryAddress:
+    process.env.L1_ANCHOR_REGISTRY_ADDRESS || process.env.ANCHOR_REGISTRY_ADDRESS,
 };
 
 const l2 = {
@@ -68,6 +70,13 @@ const env = {
   resendApiKey: process.env.RESEND_API_KEY,
   mailtrapApiKey: process.env.MAILTRAP_API_KEY,
   authBypass: String(process.env.AUTH_BYPASS || "false").toLowerCase() === "true",
+  l2Anchor: {
+    enabled:
+      String(process.env.L2_ANCHOR_ENABLED || "true").toLowerCase() === "true",
+    batchSize: Math.max(1, Number(process.env.L2_ANCHOR_BATCH_SIZE || 100)),
+    maxAgeHours: Math.max(1, Number(process.env.L2_ANCHOR_MAX_AGE_HOURS || 24)),
+    sweepMinutes: Math.max(1, Number(process.env.L2_ANCHOR_SWEEP_MINUTES || 10)),
+  },
 };
 
 const required = [

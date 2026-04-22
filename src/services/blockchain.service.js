@@ -29,6 +29,7 @@ function chainMeta(network) {
     chainId: cfg.chainId || null,
     registryAddress: cfg.productRegistryAddress || null,
     lifecycleAddress: cfg.productLifecycleAddress || null,
+    anchorRegistryAddress: cfg.anchorRegistryAddress || null,
   };
 }
 
@@ -91,8 +92,43 @@ async function addLifecycleEventOnChain(
   };
 }
 
+async function anchorMerkleRootOnL1({
+  merkleRoot,
+  fromEventIndex,
+  toEventIndex,
+  eventCount,
+}) {
+  const network = "l1";
+  const contracts = contractsByChain[network];
+  if (!contracts?.anchorRegistry) {
+    throw new ApiError(500, "L1 anchor registry is not configured");
+  }
+
+  const contract = contracts.anchorRegistry;
+  let tx;
+  try {
+    tx = await contract.anchorBatch(
+      merkleRoot,
+      BigInt(fromEventIndex),
+      BigInt(toEventIndex),
+      BigInt(eventCount)
+    );
+  } catch (_batchErr) {
+    tx = await contract.anchorRoot(merkleRoot);
+  }
+
+  const receipt = await tx.wait();
+  return {
+    ...chainMeta(network),
+    txHash: receiptHash(receipt),
+    blockNumber: Number(receipt.blockNumber),
+    gas: gasMetricsFromReceipt(receipt),
+  };
+}
+
 module.exports = {
   contractsByChain,
   addProductOnChain,
   addLifecycleEventOnChain,
+  anchorMerkleRootOnL1,
 };

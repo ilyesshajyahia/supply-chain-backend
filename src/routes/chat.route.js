@@ -8,5 +8,6 @@ const internalRolesOnly = roleGuard(["manufacturer", "distributor", "reseller"])
 
 router.get("/messages", requireAuth, internalRolesOnly, controller.listMessages);
 router.post("/messages", requireAuth, internalRolesOnly, controller.sendMessage);
+router.get("/participants", requireAuth, internalRolesOnly, controller.listParticipants);
 
 module.exports = router;

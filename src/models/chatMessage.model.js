@@ -11,7 +11,28 @@ const chatMessageSchema = new mongoose.Schema(
       enum: ["manufacturer", "distributor", "reseller", "customer"],
       required: true,
     },
-    text: { type: String, required: true, trim: true, maxlength: 1000 },
+    text: { type: String, default: "", trim: true, maxlength: 1000 },
+    toRoles: {
+      type: [
+        {
+          type: String,
+          enum: ["manufacturer", "distributor", "reseller"],
+        },
+      ],
+      default: ["manufacturer", "distributor", "reseller"],
+      index: true,
+    },
+    attachments: {
+      type: [
+        {
+          fileName: { type: String, required: true },
+          mimeType: { type: String, required: true },
+          sizeBytes: { type: Number, required: true },
+          url: { type: String, required: true },
+        },
+      ],
+      default: [],
+    },
     seenByUserIds: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
       default: [],
