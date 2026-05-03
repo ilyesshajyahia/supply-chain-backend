@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 
 // Models
 const Product = require("../src/models/product.model");
@@ -29,12 +30,13 @@ async function seed() {
     await Product.deleteMany({ orgId });
     await User.deleteMany({ orgId });
 
+    const passwordHash = await bcrypt.hash("password123", 10);
     // 1. Create Test Users
     console.log("Creating test users...");
     const testUsers = [
       {
         email: "admin@test.com",
-        password: "password123", // In a real app this would be hashed, but this is a mock seed
+        passwordHash: passwordHash,
         role: "manufacturer",
         orgId: orgId,
         name: "Admin User",
@@ -43,7 +45,7 @@ async function seed() {
       },
       {
         email: "distributor@test.com",
-        password: "password123",
+        passwordHash: passwordHash,
         role: "distributor",
         orgId: orgId,
         name: "Global Distributor Inc.",
@@ -52,7 +54,7 @@ async function seed() {
       },
       {
         email: "reseller@test.com",
-        password: "password123",
+        passwordHash: passwordHash,
         role: "reseller",
         orgId: orgId,
         name: "Local Reseller Shop",
@@ -87,6 +89,7 @@ async function seed() {
         
         productsToInsert.push({
           qrId: qrId,
+          serialNumber: `SN-${batchIdx}-${prodIdx}-${Math.floor(Math.random() * 10000)}`,
           productIdOnChain: Math.floor(Math.random() * 100000).toString(),
           orgId: orgId,
           name: `Premium Product V${batchIdx}`,
