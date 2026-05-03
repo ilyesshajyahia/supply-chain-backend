@@ -1,4 +1,5 @@
 const User = require("../models/user.model");
+const Product = require("../models/product.model");
 const ProductEvent = require("../models/productEvent.model");
 const ApiError = require("../utils/ApiError");
 const { logAuditEvent } = require("./audit.service");
@@ -159,6 +160,28 @@ async function getOrgAnchorProof({ orgId, anchorId, eventId }) {
   return buildAnchorProof({ orgId, anchorId, eventId });
 }
 
+async function flagBatch({ orgId, batchNumber, status, reason, actorUser, req }) {
+  if (!batchNumber) throw new ApiError(400, "batchNumber is required");
+  if (!["active", "suspicious", "quarantined", "recalled"].includes(status)) {
+    throw new ApiError(400, "Invalid batch status");
+  }
+
+  const result = await Product.updateMany(
+    { orgId, batchNumber },
+    { $set: { batchStatus: status, batchFlagReason: reason || null } }
+  );
+
+  await logAuditEvent({
+    orgId,
+    action: "batch_flagged",
+    actorUser,
+    meta: { batchNumber, status, reason, modifiedCount: result.modifiedCount },
+    req,
+  });
+
+  return { batchNumber, status, reason, modifiedCount: result.modifiedCount };
+}
+
 module.exports = {
   listOrgUsers,
   setUserActive,
@@ -168,4 +191,5 @@ module.exports = {
   listOrgAnchors,
   runOrgAnchor,
   getOrgAnchorProof,
+  flagBatch,
 };

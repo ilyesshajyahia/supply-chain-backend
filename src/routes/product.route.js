@@ -10,5 +10,6 @@ router.post("/:identifier/flag", requireAuth, roleGuard(["admin", "manufacturer"
 router.post("/register", requireAuth, roleGuard(["manufacturer"]), controller.register);
 router.post("/transfer", requireAuth, roleGuard(["distributor", "reseller"]), controller.transfer);
 router.post("/finalize-sale", requireAuth, roleGuard(["reseller"]), controller.finalizeSale);
+router.post("/:identifier/report-fake", requireAuth, roleGuard(["reseller"]), controller.reportFake);
 
 module.exports = router;

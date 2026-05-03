@@ -7,6 +7,7 @@ const CounterfeitFlag = require("../models/counterfeitFlag.model");
 const { isInAuthorizedZone } = require("./geofence.service");
 const { addProductOnChain, addLifecycleEventOnChain } = require("./blockchain.service");
 const { maybeAnchorL2ForOrg } = require("./anchor.service");
+const orgService = require("./org.service");
 
 function toPoint(longitude, latitude) {
   return { type: "Point", coordinates: [Number(longitude), Number(latitude)] };
@@ -132,6 +133,7 @@ async function registerProduct({ user, payload }) {
   const category = normalizeOptionalText(payload.category, 120);
   const color = normalizeOptionalText(payload.color, 80);
   const description = normalizeOptionalText(payload.description, 1000);
+  const batchNumber = normalizeIdentifier(payload.batchNumber);
   if (!qrId || !productIdOnChain || !name) {
     throw new ApiError(400, "qrId, productIdOnChain, and name are required");
   }
@@ -189,6 +191,7 @@ async function registerProduct({ user, payload }) {
             isSold: false,
             soldAt: null,
             lastTxHash: chainResultEvent.txHash || chainResultProduct.txHash,
+            batchNumber,
           },
         ],
         { session }
@@ -472,6 +475,10 @@ async function registerPublicScan({ qrId, serialNumber, identifier, longitude, l
   }
 
   let result = "verified";
+  if (product.batchStatus && product.batchStatus !== "active") {
+    result = "batch_warning";
+  }
+
   if (product.isSold) {
     const soldPublicScans = await ScanEvent.countDocuments({
       productId: product._id,
@@ -549,6 +556,57 @@ async function flagProductManual(qrId, reason, byUserId) {
 
   return product;
 }
+async function reportFakeProduct({ identifier, user, reason }) {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) throw new ApiError(400, "identifier is required");
+
+  if (user.role !== "reseller") {
+    throw new ApiError(403, "Only a reseller can report a fake product");
+  }
+
+  const product = await findProductByIdentifier(normalized);
+  if (!product) throw new ApiError(404, "Product not found");
+
+  product.status = "suspicious";
+  await product.save();
+
+  await CounterfeitFlag.updateOne(
+    { productId: product._id, isOpen: true },
+    {
+      $setOnInsert: {
+        qrId: product.qrId,
+        scannedIdentifier: product.qrId,
+        productId: product._id,
+        reason: reason || "reported_by_reseller",
+        severity: "high",
+        firstDetectedAt: new Date(),
+        isOpen: true,
+      },
+    },
+    { upsert: true }
+  );
+
+  if (product.batchNumber) {
+    const totalCount = await Product.countDocuments({ orgId: product.orgId, batchNumber: product.batchNumber });
+    const suspiciousCount = await Product.countDocuments({ orgId: product.orgId, batchNumber: product.batchNumber, status: "suspicious" });
+
+    if (totalCount > 0) {
+      const ratio = suspiciousCount / totalCount;
+      if (ratio >= 0.30 && suspiciousCount >= 3) {
+        await orgService.flagBatch({
+          orgId: product.orgId,
+          batchNumber: product.batchNumber,
+          status: "suspicious",
+          reason: "Auto-quarantine: Exceeded 30% counterfeit report threshold from resellers.",
+          actorUser: user,
+          req: null,
+        });
+      }
+    }
+  }
+
+  return product;
+}
 
 module.exports = {
   registerProduct,
@@ -557,4 +615,5 @@ module.exports = {
   getProductHistoryByQrId,
   registerPublicScan,
   flagProductManual,
+  reportFakeProduct,
 };

@@ -26,6 +26,13 @@ const productSchema = new mongoose.Schema(
     isSold: { type: Boolean, default: false },
     soldAt: { type: Date, default: null },
     lastTxHash: { type: String, default: null },
+    batchNumber: { type: String, default: null, index: true },
+    batchStatus: {
+      type: String,
+      enum: ["active", "suspicious", "quarantined", "recalled"],
+      default: "active",
+    },
+    batchFlagReason: { type: String, default: null },
   },
   { timestamps: true, collection: "products" }
 );

@@ -98,6 +98,18 @@ const publicProductPage = asyncHandler(async (req, res) => {
         <div class="badge">ChainTrace Product Passport</div>
         <h1>${escapeHtml(product.name)} (${escapeHtml(product.qrId)})</h1>
         <div class="muted">Status: ${escapeHtml(product.status)}</div>
+        ${product.batchNumber ? `<div class="muted">Batch: ${escapeHtml(product.batchNumber)}</div>` : ""}
+        ${
+          product.batchStatus && product.batchStatus !== "active"
+            ? `<div class="warn"><b>Batch Warning:</b> This product belongs to a batch that has been marked as ${escapeHtml(
+                product.batchStatus
+              )}.${
+                product.batchFlagReason
+                  ? ` Reason: ${escapeHtml(product.batchFlagReason)}`
+                  : ""
+              }</div>`
+            : ""
+        }
         ${suspicious ? `<div class="warn">${escapeHtml(suspicious)}</div>` : ""}
         <h2>Blockchain Timeline</h2>
         <table>

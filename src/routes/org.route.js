@@ -18,5 +18,6 @@ router.get(
 );
 router.patch("/users/:userId/active", requireAuth, requireOrgAdmin, controller.setUserActive);
 router.patch("/users/:userId/admin", requireAuth, requireOrgAdmin, controller.setUserOrgAdmin);
+router.post("/batches/:batchNumber/flag", requireAuth, requireOrgAdmin, controller.flagBatch);
 
 module.exports = router;

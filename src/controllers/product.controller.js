@@ -36,5 +36,13 @@ const flagProduct = asyncHandler(async (req, res) => {
   );
   res.json({ ok: true, data });
 });
+const reportFake = asyncHandler(async (req, res) => {
+  const data = await productService.reportFakeProduct({
+    identifier: req.params.identifier,
+    user: req.user,
+    reason: req.body.reason,
+  });
+  res.json({ ok: true, data });
+});
 
-module.exports = { register, transfer, finalizeSale, history, flagProduct };
+module.exports = { register, transfer, finalizeSale, history, flagProduct, reportFake };

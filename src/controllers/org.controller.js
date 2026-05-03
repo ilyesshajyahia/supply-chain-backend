@@ -63,6 +63,17 @@ const anchorProof = asyncHandler(async (req, res) => {
   });
   res.json({ ok: true, data });
 });
+const flagBatch = asyncHandler(async (req, res) => {
+  const data = await orgService.flagBatch({
+    orgId: req.user.orgId,
+    batchNumber: req.params.batchNumber,
+    status: req.body.status,
+    reason: req.body.reason,
+    actorUser: req.user,
+    req,
+  });
+  res.json({ ok: true, data });
+});
 
 module.exports = {
   listUsers,
@@ -73,4 +84,5 @@ module.exports = {
   listAnchors,
   runAnchor,
   anchorProof,
+  flagBatch,
 };
