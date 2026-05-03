@@ -70,6 +70,8 @@ const env = {
   resendApiKey: process.env.RESEND_API_KEY,
   mailtrapApiKey: process.env.MAILTRAP_API_KEY,
   authBypass: String(process.env.AUTH_BYPASS || "false").toLowerCase() === "true",
+  failClosedGeofence: String(process.env.FAIL_CLOSED_GEOFENCE || "false").toLowerCase() === "true",
+  blockExplorerUrl: process.env.BLOCK_EXPLORER_URL || "https://testnet.routescan.io",
   l2Anchor: {
     enabled:
       String(process.env.L2_ANCHOR_ENABLED || "true").toLowerCase() === "true",

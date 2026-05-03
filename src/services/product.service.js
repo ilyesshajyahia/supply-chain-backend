@@ -27,6 +27,68 @@ function normalizeOptionalText(value, max = 256) {
   return text.length > max ? text.slice(0, max) : text;
 }
 
+function haversineDistanceKm(a, b) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const earth = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) *
+      Math.sin(dLon / 2) *
+      Math.cos(lat1) *
+      Math.cos(lat2);
+  return earth * 2 * Math.asin(Math.sqrt(h));
+}
+
+function validateOfflineTimestamp(timestamp) {
+  if (!timestamp) return;
+  const scanDate = new Date(timestamp);
+  const now = new Date();
+
+  const hour = scanDate.getHours();
+  if (hour < 6 || hour >= 19) {
+    throw new ApiError(403, `Offline scan rejected: Scan time is outside the 6 AM - 7 PM shift window.`);
+  }
+
+  const hoursOld = (now - scanDate) / (1000 * 60 * 60);
+  if (hoursOld > 24) {
+    throw new ApiError(403, "Offline scan expired: Scans must be synced within 24 hours.");
+  }
+  
+  if (hoursOld < -1) {
+    throw new ApiError(403, "Offline scan rejected: Timestamp is in the future.");
+  }
+}
+
+async function checkImpossibleTravel(productId, newLng, newLat, newTimestamp) {
+  const lastScan = await ScanEvent.findOne({ productId }).sort({ timestamp: -1 }).lean();
+  const lastProductEvent = await ProductEvent.findOne({ productId }).sort({ timestamp: -1 }).lean();
+  
+  let lastEvent = null;
+  if (lastScan && lastProductEvent) {
+    lastEvent = lastScan.timestamp > lastProductEvent.timestamp ? lastScan : lastProductEvent;
+  } else {
+    lastEvent = lastScan || lastProductEvent;
+  }
+
+  if (!lastEvent || !lastEvent.location || !lastEvent.location.coordinates) return false;
+
+  const [oldLng, oldLat] = lastEvent.location.coordinates;
+  const distance = haversineDistanceKm({ lat: oldLat, lng: oldLng }, { lat: Number(newLat), lng: Number(newLng) });
+  const timeDiffHours = (new Date(newTimestamp) - new Date(lastEvent.timestamp)) / (1000 * 60 * 60);
+
+  if (timeDiffHours <= 0) return false;
+
+  const speed = distance / timeDiffHours;
+  if (speed > 1000 && distance > 100) { // Faster than 1000km/h and at least 100km apart
+    return true;
+  }
+  return false;
+}
+
 async function triggerAutoAnchorIfNeeded(orgId, network) {
   if (String(network || "").toLowerCase() !== "l2") return;
   try {
@@ -76,6 +138,8 @@ async function registerProduct({ user, payload }) {
   if (user.role !== "manufacturer") {
     throw new ApiError(403, "Only manufacturer can register product");
   }
+
+  validateOfflineTimestamp(payload.offlineTimestamp);
 
   const session = await mongoose.startSession();
   try {
@@ -141,7 +205,7 @@ async function registerProduct({ user, payload }) {
             location: toPoint(longitude, latitude),
             txHash: chainResultEvent.txHash,
             blockNumber: chainResultEvent.blockNumber,
-            timestamp: new Date(),
+            timestamp: payload.offlineTimestamp ? new Date(payload.offlineTimestamp) : new Date(),
             meta: {
               eventType: "Manufactured",
               network: chainResultEvent.network || chainResultProduct.network || null,
@@ -208,6 +272,8 @@ async function transferProduct({ user, payload }) {
     throw new ApiError(403, "Only distributor or reseller can transfer in this step");
   }
 
+  validateOfflineTimestamp(payload.offlineTimestamp);
+
   const session = await mongoose.startSession();
   try {
     let updated;
@@ -249,7 +315,7 @@ async function transferProduct({ user, payload }) {
             location: toPoint(longitude, latitude),
             txHash: chainResult.txHash,
             blockNumber: chainResult.blockNumber,
-            timestamp: new Date(),
+            timestamp: payload.offlineTimestamp ? new Date(payload.offlineTimestamp) : new Date(),
             meta: {
               eventType: rules.eventType,
               network: chainResult.network || null,
@@ -272,7 +338,7 @@ async function transferProduct({ user, payload }) {
             location: toPoint(longitude, latitude),
             result: "verified",
             scannedIdentifier: identifier,
-            timestamp: new Date(),
+            timestamp: payload.offlineTimestamp ? new Date(payload.offlineTimestamp) : new Date(),
           },
         ],
         { session }
@@ -299,6 +365,8 @@ async function finalizeSale({ user, payload }) {
   }
   if (!identifier) throw new ApiError(400, "qrId or serialNumber is required");
 
+  validateOfflineTimestamp(payload.offlineTimestamp);
+
   const session = await mongoose.startSession();
   try {
     let updated;
@@ -323,7 +391,7 @@ async function finalizeSale({ user, payload }) {
 
       product.isSold = true;
       product.status = "sold";
-      product.soldAt = new Date();
+      product.soldAt = payload.offlineTimestamp ? new Date(payload.offlineTimestamp) : new Date();
       product.lastTxHash = chainResult.txHash;
       await product.save({ session });
 
@@ -338,7 +406,7 @@ async function finalizeSale({ user, payload }) {
             location: toPoint(longitude, latitude),
             txHash: chainResult.txHash,
             blockNumber: chainResult.blockNumber,
-            timestamp: new Date(),
+            timestamp: payload.offlineTimestamp ? new Date(payload.offlineTimestamp) : new Date(),
             meta: {
               eventType: "Purchased",
               network: chainResult.network || null,
@@ -398,6 +466,11 @@ async function registerPublicScan({ qrId, serialNumber, identifier, longitude, l
     return { result: "unknown_qr", product: null };
   }
 
+  const existingFlag = await CounterfeitFlag.findOne({ qrId: canonicalQr, isOpen: true }).lean();
+  if (existingFlag) {
+    return { result: "flagged_as_fake", product: product.toObject() };
+  }
+
   let result = "verified";
   if (product.isSold) {
     const soldPublicScans = await ScanEvent.countDocuments({
@@ -408,6 +481,13 @@ async function registerPublicScan({ qrId, serialNumber, identifier, longitude, l
 
     if (soldPublicScans >= 1) {
       result = "duplicate_scan_after_sold";
+    }
+  }
+
+  if (result === "verified") {
+    const isImpossible = await checkImpossibleTravel(product._id, longitude, latitude, now);
+    if (isImpossible) {
+      result = "impossible_travel";
     }
   }
 
@@ -422,15 +502,15 @@ async function registerPublicScan({ qrId, serialNumber, identifier, longitude, l
     timestamp: now,
   });
 
-  if (result === "duplicate_scan_after_sold") {
+  if (result === "duplicate_scan_after_sold" || result === "impossible_travel") {
     await CounterfeitFlag.updateOne(
-      { productId: product._id, reason: "duplicate_scan_after_sold", isOpen: true },
+      { productId: product._id, reason: result, isOpen: true },
       {
         $setOnInsert: {
           qrId: canonicalQr,
           scannedIdentifier: resolvedIdentifier,
           productId: product._id,
-          reason: "duplicate_scan_after_sold",
+          reason: result,
           severity: "high",
           firstDetectedAt: now,
           isOpen: true,
@@ -444,10 +524,37 @@ async function registerPublicScan({ qrId, serialNumber, identifier, longitude, l
   return { result, product: product.toObject() };
 }
 
+async function flagProductManual(qrId, reason, byUserId) {
+  const normalized = normalizeIdentifier(qrId);
+  if (!normalized) throw new ApiError(400, "qrId is required");
+
+  const product = await findProductByIdentifier(normalized);
+  if (!product) throw new ApiError(404, "Product not found");
+
+  await CounterfeitFlag.updateOne(
+    { productId: product._id, reason, isOpen: true },
+    {
+      $setOnInsert: {
+        qrId: product.qrId,
+        scannedIdentifier: product.qrId,
+        productId: product._id,
+        reason,
+        severity: "high",
+        firstDetectedAt: new Date(),
+        isOpen: true,
+      },
+    },
+    { upsert: true }
+  );
+
+  return product;
+}
+
 module.exports = {
   registerProduct,
   transferProduct,
   finalizeSale,
   getProductHistoryByQrId,
   registerPublicScan,
+  flagProductManual,
 };

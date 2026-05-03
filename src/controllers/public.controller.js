@@ -1,6 +1,8 @@
 const asyncHandler = require("../utils/asyncHandler");
 const productService = require("../services/product.service");
 const scanService = require("../services/scan.service");
+const env = require("../config/env");
+
 
 function escapeHtml(text) {
   return String(text || "")
@@ -111,7 +113,7 @@ const publicProductPage = asyncHandler(async (req, res) => {
                   <td>${escapeHtml(formatDate(e.timestamp))}</td>
                   <td>${
                     e.txHash
-                      ? `<a target="_blank" rel="noopener noreferrer" href="https://testnet.routescan.io/tx/${escapeHtml(
+                      ? `<a target="_blank" rel="noopener noreferrer" href="${escapeHtml(env.blockExplorerUrl)}/tx/${escapeHtml(
                           e.txHash
                         )}">${escapeHtml(e.txHash.slice(0, 10))}...</a>`
                       : "-"

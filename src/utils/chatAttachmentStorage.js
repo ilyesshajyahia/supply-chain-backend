@@ -80,6 +80,33 @@ async function storeChatAttachments(rawAttachments) {
   return stored;
 }
 
+async function cleanupOldAttachments(days = 30) {
+  try {
+    const files = await fs.readdir(CHAT_UPLOAD_DIR);
+    const now = Date.now();
+    const thresholdMs = days * 24 * 60 * 60 * 1000;
+    let deletedCount = 0;
+
+    for (const file of files) {
+      if (file.startsWith(".")) continue;
+      const filePath = path.join(CHAT_UPLOAD_DIR, file);
+      const stats = await fs.stat(filePath);
+      if (now - stats.mtimeMs > thresholdMs) {
+        await fs.unlink(filePath);
+        deletedCount++;
+      }
+    }
+    // eslint-disable-next-line no-console
+    console.log(`Cleaned up ${deletedCount} old chat attachments (older than ${days} days).`);
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      // eslint-disable-next-line no-console
+      console.error("Failed to cleanup chat attachments:", err);
+    }
+  }
+}
+
 module.exports = {
   storeChatAttachments,
+  cleanupOldAttachments,
 };

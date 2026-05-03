@@ -2,6 +2,7 @@ const app = require("./app");
 const env = require("./config/env");
 const { connectDatabase } = require("./config/db");
 const { sweepAnchorsForAllOrgs } = require("./services/anchor.service");
+const { cleanupOldAttachments } = require("./utils/chatAttachmentStorage");
 
 (async function start() {
   await connectDatabase(env.mongoUri);
@@ -23,4 +24,12 @@ const { sweepAnchorsForAllOrgs } = require("./services/anchor.service");
       }
     }, intervalMs);
   }
+
+  // Run chat attachment cleanup daily
+  setInterval(() => {
+    cleanupOldAttachments(30);
+  }, 24 * 60 * 60 * 1000);
+  
+  // Also run once on startup
+  cleanupOldAttachments(30);
 })();

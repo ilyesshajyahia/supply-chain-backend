@@ -1,50 +1,64 @@
-# Supply Chain Backend (Express)
+# ChainTrace Backend
 
-Express + MongoDB + Ethers backend for your Flutter app.
+The backend system powering the ChainTrace platform, built with Node.js, Express, and MongoDB.
 
-## Quick start
+## Features
 
-1. Copy env file:
-   - `cp .env.example .env` (or create manually on Windows)
-2. Install deps:
-   - `npm install`
-3. Start dev server:
-   - `npm run dev`
+- **Auth & RBAC**: JWT-based authentication with strict role enforcement (Org Admins, Manufacturers, Distributors, Resellers).
+- **Blockchain Integration**: Merkle tree L2-to-L1 anchoring system for batching supply chain events, reducing gas costs.
+- **Geofencing & Analytics**: Validates scans against predefined organizational boundaries and aggregates gas metrics.
+- **File Management**: Automated chat attachment lifecycle (30-day retention).
 
-Default API base URL: `http://localhost:4000/api/v1`
+## Getting Started
 
-## Endpoints
+### Prerequisites
 
-- `GET /health`
-- `POST /products/register` (manufacturer)
-- `POST /products/transfer` (retailer/reseller)
-- `POST /products/finalize-sale` (reseller)
-- `GET /products/:qrId/history` (public)
-- `POST /scans/public` (public)
+- Node.js (v18+)
+- MongoDB (local or Atlas cluster)
+- An active `RESEND_API_KEY` or `MAILTRAP_API_KEY` for email sending.
+- Infura or another RPC provider for L1 transactions.
 
-## Auth model used in this scaffold
+### Environment Setup
 
-This scaffold uses `x-user-id` header and resolves user from MongoDB.
-Replace with JWT/Auth provider in production.
+Create a `.env` file in the `backend/` directory using the following template:
 
-## Important contract note
+```env
+# Server
+PORT=4000
+NODE_ENV=development
 
-Your contracts authorize by `msg.sender`. Since backend sends transactions from one signer wallet,
-that signer must be granted the needed on-chain roles, or contract design must be adjusted for relaying/delegation.
+# Database
+MONGO_URI=mongodb://127.0.0.1:27017/chaintrace
+JWT_SECRET=super_secret_jwt_key
 
-## CI
+# Email
+RESEND_API_KEY=re_your_api_key
 
-Backend GitHub Actions workflow file: `.github/workflows/backend-ci.yml`.
+# Blockchain
+L1_RPC_URL=https://sepolia.infura.io/v3/your_project_id
+L1_CHAIN_ID=11155111
+L2_ANCHOR_ENABLED=true
 
-## Gas metrics (backend ready)
+# Security
+FAIL_CLOSED_GEOFENCE=true
+BLOCK_EXPLORER_URL=https://testnet.routescan.io
+```
 
-On-chain product lifecycle writes now store gas metrics inside event metadata:
-- `gasUsed`
-- `gasPriceWei`
-- `costWei`
-- `costEth`
+### Installation
 
-Admin endpoint for aggregation is available at:
-- `GET /api/v1/org/metrics/gas?days=30`
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-This is ready to be surfaced later in the admin metrics UI cards/charts.
+2. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Testing
+
+Run the automated regression test suite using Jest:
+```bash
+npm test
+```

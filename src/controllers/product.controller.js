@@ -27,4 +27,14 @@ const history = asyncHandler(async (req, res) => {
   res.json({ ok: true, data });
 });
 
-module.exports = { register, transfer, finalizeSale, history };
+const flagProduct = asyncHandler(async (req, res) => {
+  const reason = req.body.reason || "manual_audit_failure";
+  const data = await productService.flagProductManual(
+    req.params.identifier,
+    reason,
+    req.user._id
+  );
+  res.json({ ok: true, data });
+});
+
+module.exports = { register, transfer, finalizeSale, history, flagProduct };
