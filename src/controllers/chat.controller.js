@@ -21,6 +21,11 @@ const sendMessage = asyncHandler(async (req, res) => {
   res.status(201).json({ ok: true, data });
 });
 
+const listParticipants = asyncHandler(async (req, res) => {
+  const data = await chatService.listParticipantsForUser(req.user);
+  res.json({ ok: true, data });
+});
+
 const getAttachment = asyncHandler(async (req, res) => {
   const attachment = await chatService.getAttachmentById(req.params.id);
   res.setHeader("Content-Type", attachment.mimeType);
