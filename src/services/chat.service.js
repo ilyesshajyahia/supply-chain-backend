@@ -1,5 +1,6 @@
 const ApiError = require("../utils/ApiError");
 const ChatMessage = require("../models/chatMessage.model");
+const ChatAttachment = require("../models/chatAttachment.model");
 const Product = require("../models/product.model");
 const User = require("../models/user.model");
 const { storeChatAttachments } = require("../utils/chatAttachmentStorage");
@@ -168,9 +169,18 @@ async function listParticipantsForUser(user) {
   }));
 }
 
+async function getAttachmentById(id) {
+  const attachment = await ChatAttachment.findById(id).lean();
+  if (!attachment) {
+    throw new ApiError(404, "Attachment not found");
+  }
+  return attachment;
+}
+
 module.exports = {
   listMessages,
   listMessagesForUser,
   sendMessage,
   listParticipantsForUser,
+  getAttachmentById,
 };

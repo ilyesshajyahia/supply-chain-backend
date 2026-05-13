@@ -7,7 +7,7 @@ const bcrypt = require("bcryptjs");
 // Models
 const Product = require("../src/models/product.model");
 const User = require("../src/models/user.model");
-// Assuming there might be an Org model, but we will just use a dummy orgId.
+const Zone = require("../src/models/zone.model");
 
 async function seed() {
   const mongoUri = process.env.MONGO_URI;
@@ -22,7 +22,7 @@ async function seed() {
     console.log("Connected successfully.");
 
     // Define mock data parameters
-    const orgId = "org-test-123";
+    const orgId = "org_001";
     const batchPrefix = "B-2026-";
     
     // Clear old test data (optional)

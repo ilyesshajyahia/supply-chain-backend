@@ -8,7 +8,18 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "lint": "echo \"No lint configured\"",
-    "test": "jest"
+    "test": "jest",
+    "test:report": "jest --reporters=default --reporters=jest-html-reporter"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 10000
+  },
+  "jest-html-reporter": {
+    "pageTitle": "ChainTrace API — Test Report",
+    "outputPath": "test-report/index.html",
+    "includeFailureMsg": true,
+    "theme": "darkTheme"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -24,6 +35,7 @@
   },
   "devDependencies": {
     "jest": "^30.3.0",
+    "jest-html-reporter": "^4.4.0",
     "nodemon": "^3.1.9",
     "supertest": "^7.2.2"
   }

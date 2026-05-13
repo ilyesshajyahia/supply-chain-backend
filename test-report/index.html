@@ -1,0 +1,278 @@
+<html><head><meta charset="utf-8"/><title>ChainTrace API — Test Report</title><style type="text/css">:root {
+  --text-primary: #eee;
+  --text-secondary: #aaa;
+  --success: #2ecc71;
+  --success-bright: #1e3d2a;
+  --danger: #e74c3c;
+  --danger-bright: #3d1e1e;
+  --warning: #f39c12;
+  --warning-bright: #3d2c1e;
+  --panel: #1f1f1f;
+  --border: #444;
+  --disabled: #666;
+  background-color: #121212;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">ChainTrace API — Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-05-08 16:17:12</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (7)</div><div class="summary-passed ">7 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (66)</div><div class="summary-passed ">66 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\ilyess\StudioProjects\flutter_app\backend\test\app.test.js</div><div class="suite-time">2.122s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">API Server Bootstrap</div><div class="test-title">should return 200 on root endpoint</div><div class="test-status">passed</div><div class="test-duration">0.055s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\ilyess\StudioProjects\flutter_app\backend\test\org.test.js</div><div class="suite-time">2.239s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; GET /api/v1/org/users</div><div class="test-title">should reject without auth token</div><div class="test-status">passed</div><div class="test-duration">0.11s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; GET /api/v1/org/users</div><div class="test-title">should reject with invalid Bearer token</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; GET /api/v1/org/metrics/gas</div><div class="test-title">should reject gas metrics without auth</div><div class="test-status">passed</div><div class="test-duration">0.016s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; GET /api/v1/org/anchors/status</div><div class="test-title">should reject anchor status without auth</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; GET /api/v1/org/anchors</div><div class="test-title">should reject anchor list without auth</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; POST /api/v1/org/anchors/run</div><div class="test-title">should reject manual anchor run without auth</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; PATCH /api/v1/org/users/:userId/active</div><div class="test-title">should reject user activation without auth</div><div class="test-status">passed</div><div class="test-duration">0.02s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; PATCH /api/v1/org/users/:userId/admin</div><div class="test-title">should reject admin promotion without auth</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Organization API — Authentication Guard &gt; POST /api/v1/org/batches/:batchNumber/flag</div><div class="test-title">should reject batch quarantine without auth</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\ilyess\StudioProjects\flutter_app\backend\test\health.test.js</div><div class="suite-time">2.287s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /</div><div class="test-title">should return running status</div><div class="test-status">passed</div><div class="test-duration">0.056s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health</div><div class="test-title">should return ok:true with timestamp</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health</div><div class="test-title">should return a valid ISO timestamp</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health/details</div><div class="test-title">should return detailed system information</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health/details</div><div class="test-title">should include database connection status</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health/details</div><div class="test-title">should include blockchain chain configuration</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health/details</div><div class="test-title">should include L1 chain details with contract addresses</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health/details</div><div class="test-title">should include L2 anchoring configuration</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health &amp; System API &gt; GET /api/v1/health/details</div><div class="test-title">should include email provider configuration</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Error Handling &amp; Routing &gt; 404 — Unknown routes</div><div class="test-title">should return 404 for non-existent GET route</div><div class="test-status">passed</div><div class="test-duration">0.022s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Error Handling &amp; Routing &gt; 404 — Unknown routes</div><div class="test-title">should return 404 for non-existent POST route</div><div class="test-status">passed</div><div class="test-duration">0.017s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Error Handling &amp; Routing &gt; 404 — Unknown routes</div><div class="test-title">should return 404 for completely unknown path</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Error Handling &amp; Routing &gt; Response Format Consistency</div><div class="test-title">should include requestId in error responses</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Error Handling &amp; Routing &gt; Response Format Consistency</div><div class="test-title">should include ok:false in all error responses</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Error Handling &amp; Routing &gt; Response Format Consistency</div><div class="test-title">health endpoint should return proper JSON content-type</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Error Handling &amp; Routing &gt; Response Format Consistency</div><div class="test-title">should set security headers via Helmet</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\ilyess\StudioProjects\flutter_app\backend\test\chat-scan-zone.test.js</div><div class="suite-time">4.902s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Chat API — Authentication Guard &gt; GET /api/v1/chat/messages</div><div class="test-title">should reject message listing without auth</div><div class="test-status">passed</div><div class="test-duration">0.059s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Chat API — Authentication Guard &gt; POST /api/v1/chat/messages</div><div class="test-title">should reject sending message without auth</div><div class="test-status">passed</div><div class="test-duration">0.026s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Chat API — Authentication Guard &gt; GET /api/v1/chat/participants</div><div class="test-title">should reject participant listing without auth</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Scan API — Public Endpoints &gt; GET /api/v1/scans/public/:identifier/history</div><div class="test-title">should return scan history for a known product</div><div class="test-status">passed</div><div class="test-duration">1.659s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Zone API — Public Endpoints &gt; GET /api/v1/zones/active</div><div class="test-title">should return active geofence zones</div><div class="test-status">passed</div><div class="test-duration">0.088s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\ilyess\StudioProjects\flutter_app\backend\test\auth.test.js</div><div class="suite-time warn">5.16s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/signup</div><div class="test-title">should reject signup with empty body</div><div class="test-status">passed</div><div class="test-duration">0.08s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/signup</div><div class="test-title">should reject signup without password</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/signup</div><div class="test-title">should reject weak passwords</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/login</div><div class="test-title">should reject login with empty body</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/login</div><div class="test-title">should reject login with wrong password</div><div class="test-status">passed</div><div class="test-duration">1.698s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/login</div><div class="test-title">should login successfully with valid credentials</div><div class="test-status">passed</div><div class="test-duration">0.189s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; GET /api/v1/auth/me</div><div class="test-title">should reject request without token</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; GET /api/v1/auth/me</div><div class="test-title">should reject request with malformed token</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; GET /api/v1/auth/me</div><div class="test-title">should reject request with missing Bearer prefix</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; GET /api/v1/auth/me</div><div class="test-title">should return user profile with valid token</div><div class="test-status">passed</div><div class="test-duration">0.082s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/refresh</div><div class="test-title">should reject refresh without token</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/refresh</div><div class="test-title">should reject refresh with invalid token</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; POST /api/v1/auth/refresh</div><div class="test-title">should refresh session with valid token</div><div class="test-status">passed</div><div class="test-duration">0.047s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; GET /api/v1/auth/verify-email</div><div class="test-title">should reject verification without token query param</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Authentication API &gt; GET /api/v1/auth/reset-password</div><div class="test-title">should reject reset redirect without token</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\ilyess\StudioProjects\flutter_app\backend\test\product.test.js</div><div class="suite-time warn">5.905s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Authentication Guard &gt; POST /api/v1/products/register</div><div class="test-title">should reject product registration without auth token</div><div class="test-status">passed</div><div class="test-duration">0.024s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Authentication Guard &gt; POST /api/v1/products/register</div><div class="test-title">should reject with malformed Bearer token</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Authentication Guard &gt; POST /api/v1/products/transfer</div><div class="test-title">should reject transfer without auth token</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Authentication Guard &gt; POST /api/v1/products/finalize-sale</div><div class="test-title">should reject sale finalization without auth token</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Authentication Guard &gt; POST /api/v1/products/:id/flag</div><div class="test-title">should reject product flagging without auth token</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Authentication Guard &gt; POST /api/v1/products/:id/report-fake</div><div class="test-title">should reject counterfeit report without auth token</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Product Lifecycle &gt; GET /api/v1/products/:identifier/history</div><div class="test-title">should return full lifecycle history for a valid product</div><div class="test-status">passed</div><div class="test-duration">0.993s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Product Lifecycle &gt; GET /api/v1/products/:identifier/history</div><div class="test-title">should include product metadata in history response</div><div class="test-status">passed</div><div class="test-duration">0.078s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Product API — Product Lifecycle &gt; GET /api/v1/products/:identifier/history</div><div class="test-title">should return 404 for a non-existent product</div><div class="test-status">passed</div><div class="test-duration">0.04s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\ilyess\StudioProjects\flutter_app\backend\test\security.test.js</div><div class="suite-time warn">6.947s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Rate Limiting</div><div class="test-title">should allow requests under the rate limit threshold</div><div class="test-status">passed</div><div class="test-duration">0.476s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Rate Limiting</div><div class="test-title">should return 429 after exceeding the rate limit (20 requests)</div><div class="test-status">passed</div><div class="test-duration">0.582s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Account Lockout (Brute Force Protection)</div><div class="test-title">should return 401 for each failed attempt (not 429 yet)</div><div class="test-status">passed</div><div class="test-duration">0.869s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Account Lockout (Brute Force Protection)</div><div class="test-title">should still allow login after a failed attempt (account not locked)</div><div class="test-status">passed</div><div class="test-duration">0.836s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Input Sanitization</div><div class="test-title">should reject SQL injection-style input in login</div><div class="test-status">passed</div><div class="test-duration">0.052s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Input Sanitization</div><div class="test-title">should reject NoSQL injection attempt in login</div><div class="test-status">passed</div><div class="test-duration">0.037s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Input Sanitization</div><div class="test-title">should reject XSS payload in signup name field</div><div class="test-status">passed</div><div class="test-duration">0.684s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Input Sanitization</div><div class="test-title">should handle extremely long input without crashing</div><div class="test-status">passed</div><div class="test-duration">0.044s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Authorization Boundaries</div><div class="test-title">should reject access to org admin endpoints with non-admin role</div><div class="test-status">passed</div><div class="test-duration">0.074s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Authorization Boundaries</div><div class="test-title">should not expose sensitive data in error messages</div><div class="test-status">passed</div><div class="test-duration">0.145s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Security — Authorization Boundaries</div><div class="test-title">should not expose stack traces in production error responses</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div></div></details></main></body></html>

@@ -1,9 +1,6 @@
-const fs = require("fs/promises");
-const path = require("path");
-const crypto = require("crypto");
+const ChatAttachment = require("../models/chatAttachment.model");
 const ApiError = require("./ApiError");
 
-const CHAT_UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads", "chat");
 const MAX_ATTACHMENTS_PER_MESSAGE = 5;
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set([
@@ -36,7 +33,6 @@ async function storeChatAttachments(rawAttachments) {
   }
 
   if (attachments.length === 0) return [];
-  await fs.mkdir(CHAT_UPLOAD_DIR, { recursive: true });
 
   const stored = [];
   for (const raw of attachments) {
@@ -64,46 +60,29 @@ async function storeChatAttachments(rawAttachments) {
     }
 
     const originalName = sanitizeFileName(raw.fileName);
-    const randomPrefix = crypto.randomBytes(8).toString("hex");
-    const storedName = `${Date.now()}_${randomPrefix}_${originalName}`;
-    const absolutePath = path.join(CHAT_UPLOAD_DIR, storedName);
-    await fs.writeFile(absolutePath, bytes);
+    
+    // Save to MongoDB
+    const doc = await ChatAttachment.create({
+      fileName: originalName,
+      mimeType,
+      sizeBytes: bytes.length,
+      data: bytes,
+    });
 
     stored.push({
       fileName: originalName,
       mimeType,
       sizeBytes: bytes.length,
-      url: `/uploads/chat/${storedName}`,
+      url: `/api/v1/chat/attachment/${doc._id}`,
     });
   }
 
   return stored;
 }
 
-async function cleanupOldAttachments(days = 30) {
-  try {
-    const files = await fs.readdir(CHAT_UPLOAD_DIR);
-    const now = Date.now();
-    const thresholdMs = days * 24 * 60 * 60 * 1000;
-    let deletedCount = 0;
-
-    for (const file of files) {
-      if (file.startsWith(".")) continue;
-      const filePath = path.join(CHAT_UPLOAD_DIR, file);
-      const stats = await fs.stat(filePath);
-      if (now - stats.mtimeMs > thresholdMs) {
-        await fs.unlink(filePath);
-        deletedCount++;
-      }
-    }
-    // eslint-disable-next-line no-console
-    console.log(`Cleaned up ${deletedCount} old chat attachments (older than ${days} days).`);
-  } catch (err) {
-    if (err.code !== "ENOENT") {
-      // eslint-disable-next-line no-console
-      console.error("Failed to cleanup chat attachments:", err);
-    }
-  }
+// Legacy cleanup function (now a no-op)
+async function cleanupOldAttachments() {
+  return;
 }
 
 module.exports = {
