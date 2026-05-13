@@ -29,8 +29,12 @@ const listParticipants = asyncHandler(async (req, res) => {
 const getAttachment = asyncHandler(async (req, res) => {
   const attachment = await chatService.getAttachmentById(req.params.id);
   res.setHeader("Content-Type", attachment.mimeType);
-  res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
-  res.send(attachment.data);
+  res.setHeader("Cache-Control", "public, max-age=31536000");
+  // Ensure we are sending raw buffer bytes, not the JSON representation
+  const buffer = Buffer.isBuffer(attachment.data) 
+    ? attachment.data 
+    : Buffer.from(attachment.data.buffer || attachment.data);
+  res.send(buffer);
 });
 
 module.exports = { listMessages, sendMessage, listParticipants, getAttachment };
